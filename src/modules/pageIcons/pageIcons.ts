@@ -145,6 +145,7 @@ const iconMarkup = (pageIcon: iconObject): string => {
 
 const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
     linkItem.querySelector('.awLi-icon')?.remove();
+    linkItem.classList.remove('awLi-hasIcon');
     const nativeIcon = findNativeIcon(linkItem);
     if (!pageIcon.id) {
         showNativeIcon(nativeIcon);
@@ -157,7 +158,11 @@ const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) =>
     }
     // An inherited icon replaces the generic placeholder Logseq falls back to
     hideNativeIcon(nativeIcon);
-    linkItem.insertAdjacentHTML('afterbegin', iconMarkup(pageIcon));
+    // Appended rather than prepended: an inline-flex box takes its baseline
+    // from its first child, so the text has to come first for the link to sit
+    // on the same line as its surroundings. CSS `order` puts the icon in front.
+    linkItem.insertAdjacentHTML('beforeend', iconMarkup(pageIcon));
+    linkItem.classList.add('awLi-hasIcon');
 }
 
 // Inline links contain their icon; sidebar entries keep it as a sibling of the
@@ -234,6 +239,7 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
             linkItem.classList.remove('awLi-color');
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
+            linkItem.classList.remove('awLi-hasIcon');
             showNativeIcon(findNativeIcon(linkItem));
         }
     }

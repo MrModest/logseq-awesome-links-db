@@ -1,17 +1,21 @@
 /* icons */
+/* Centering the icon against the text beside it beats guessing an offset, so
+   the link itself becomes the flex context. Only links that actually carry an
+   injected icon are switched over, leaving every other link to wrap normally. */
+.awLi-hasIcon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+}
 .awLi-icon {
+    /* Painted before the text it follows in the DOM */
+    order: -1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: none;
     width: 1.15em;
     height: 1.15em;
-    margin-right: 0.3em;
-    /* `middle` centers on the x-height, which reads low beside the capitals
-       and digits most page names start with, so lift it by the difference
-       between half the x-height and half the cap height */
-    vertical-align: middle;
-    position: relative;
-    top: -0.08em;
     font-size: 1em;
     line-height: 1;
     font-weight: 400;
@@ -24,9 +28,6 @@
 }
 .awLi-icon[data-is-emoji="true"] {
     font-size: 0.9em;
-}
-.title .awLi-icon {
-    margin-right: 0.4em;
 }
 
 .awLi-nativeIconHidden {
