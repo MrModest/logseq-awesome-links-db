@@ -182,6 +182,14 @@ const getFaviconData = async (url: string): Promise<favRecord> => {
             src: 'https://ssl.gstatic.com/docs/presentations/images/favicon5.ico'
         }
     }
+    // Every Drive path - a folder, a shared file - carries the same icon,
+    // where the generic resolver only knows the host as Google
+    if (hostname === 'drive.google.com') {
+        return favIcon = {
+            format: 'img',
+            src: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png'
+        }
+    }
     // Workspace hosts are private, so no public resolver can see their icon
     if (hostname === 'slack.com' || hostname.endsWith('.slack.com')) {
         return favIcon = {
