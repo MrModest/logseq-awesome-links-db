@@ -90,8 +90,29 @@ const resolveIcon = (node: rawNode): iconObject | null => {
     return null;
 }
 
+const pullNode = async (clause: string): Promise<rawNode | null> => {
+    const nodeQuery = `
+    [
+        :find (pull ?p [:logseq.property/icon
+                        {:block/tags [:db/id :db/ident :logseq.property/icon]}])
+        :where
+            ${clause}
+    ]
+    `;
+    try {
+        const queryResult = await logseq.DB.datascriptQuery(nodeQuery);
+        if (queryResult && queryResult[0] && queryResult[0][0]) {
+            return queryResult[0][0] as rawNode;
+        }
+    } catch (error) {
+        console.error('AwesomeLinksDB: icon query failed', error);
+    }
+    return null;
+}
+
 export const getPropsByPageName = async (pageTitle: string): Promise<iconObject> => {
-    const name = pageTitle.toLowerCase().trim();
+    const title = pageTitle.trim();
+    const name = title.toLowerCase();
     if (!name) {
         return Object.create(null);
     }
@@ -99,23 +120,12 @@ export const getPropsByPageName = async (pageTitle: string): Promise<iconObject>
     if (cached) {
         return cached;
     }
-    const nodeQuery = `
-    [
-        :find (pull ?p [:logseq.property/icon
-                        {:block/tags [:db/id :db/ident :logseq.property/icon]}])
-        :where
-            [?p :block/name "${escapeForEdn(name)}"]
-    ]
-    `;
-    let icon: iconObject | null = null;
-    try {
-        const queryResult = await logseq.DB.datascriptQuery(nodeQuery);
-        if (queryResult && queryResult[0] && queryResult[0][0]) {
-            icon = resolveIcon(queryResult[0][0] as rawNode);
-        }
-    } catch (error) {
-        console.error('AwesomeLinksDB: icon query failed', error);
-    }
+    // A journal's :block/name is built from the default date format, so it does
+    // not match the title the link carries when another format is configured.
+    // Fall back to matching the title itself.
+    const node = await pullNode(`[?p :block/name "${escapeForEdn(name)}"]`)
+        || await pullNode(`[?p :block/title "${escapeForEdn(title)}"]`);
+    const icon = node ? resolveIcon(node) : null;
     const props: iconObject = icon || Object.create(null);
     iconsCache.set(name, props);
     return props;
