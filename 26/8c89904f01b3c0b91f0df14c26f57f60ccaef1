@@ -1,0 +1,29 @@
+src/modules/favIcons/favIcons.ts
+  s_f692d5ce974a88::t_dcf4689cb13976 6,75,82,89,96,103,140,158,239,248
+src/modules/globals.ts
+  s_f692d5ce974a88::t_7364f3ea766572 14-15,31-33,35
+src/modules/pageIcons/pageIcons.css
+  s_f692d5ce974a88::t_e74743f8de04cb 34-37
+src/modules/pageIcons/pageIcons.ts
+  s_f692d5ce974a88::t_9e36e13c1bfcaa 147,149,152-154,157-158,162-177,236
+src/modules/pageIcons/queries.ts
+  s_f692d5ce974a88::t_d087cdf09f1f68 73,83
+src/plugin/plugin.ts
+  s_f692d5ce974a88::t_725f526ca7a37a 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "268c89904f01b3c0b91f0df14c26f57f60ccaef1",
+  "prompts": {},
+  "sessions": {
+    "s_f692d5ce974a88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81a894f5-26e2-4b0e-bf52-b6683ce44a9e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
