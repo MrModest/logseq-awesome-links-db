@@ -37,6 +37,21 @@ export const settingsConfig: SettingSchemaDesc[] = [
         default: true,
     },
     {
+        key: 'customIconsHeading',
+        title: 'Custom icons',
+        description: 'Icons for hosts no public favicon service can see, such as a private Confluence or an internal wiki. One rule per line: match :: icon [color]. A match containing / is tested against the whole URL, otherwise it is a hostname and covers its subdomains. An icon is a Tabler id prefixed ti: (the same ids the Logseq icon picker uses), an image URL, or any text or emoji. These rules take priority over the built-in ones.',
+        type: 'heading',
+        default: null,
+    },
+    {
+        key: 'customIcons',
+        title: '',
+        description: 'For example: atlassian.cloud.deliveryhero.group :: ti:notebook #0052CC',
+        type: 'string',
+        inputAs: 'textarea',
+        default: '',
+    },
+    {
         key: 'otherHeading',
         title: 'Other',
         description: '',

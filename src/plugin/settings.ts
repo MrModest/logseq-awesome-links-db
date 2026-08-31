@@ -1,5 +1,5 @@
 import { LSPluginBaseInfo } from '@logseq/libs/dist/LSPlugin.user';
-import { toggleFaviconsFeature, toggleInheritExtColor } from '../modules/favIcons/favIcons';
+import { toggleFaviconsFeature, toggleInheritExtColor, reloadCustomIcons } from '../modules/favIcons/favIcons';
 import { globals } from '../modules/globals';
 import { toggleIconsFeature } from '../modules/pageIcons/pageIcons';
 
@@ -24,6 +24,10 @@ const onSettingsChangedCallback = (settings: LSPluginBaseInfo['settings'], oldSe
     }
     if (settingsDiff.includes('inheritExtColor')) {
         toggleInheritExtColor();
+    }
+    if (settingsDiff.includes('customIcons')) {
+        reloadCustomIcons();
+        toggleFaviconsFeature();
     }
     if (settingsDiff.includes('pageIconsEnabled') || settingsDiff.includes('fixLowContrast')) {
         toggleIconsFeature();

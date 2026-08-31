@@ -4,6 +4,7 @@ import { getPropsByPageName } from '../pageIcons/queries';
 import { isNeedLowContrastFix } from '../utils';
 
 import favIconsStyles from './favIcons.css?inline';
+import { parseCustomIcons, matchCustomRule, customIconMarkup, isImageUrl, customRule } from './customIcons';
 
 // Shown wherever a real favicon cannot be resolved
 const globeFavicon = '<svg class="awLi-favicon" width="16" height="16" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><path stroke="none" d="M0 0h24v24H0z"/><path d="M3 12a9 9 0 1 0 18 0 9 9 0 1 0-18 0m.6-3h16.8M3.6 15h16.8"/><path d="M11.5 3a17 17 0 0 0 0 18m1-18a17 17 0 0 1 0 18"/></svg>';
@@ -12,6 +13,13 @@ type favRecord = {
     format:  'img' | 'svg';
     src: string;
 };
+
+let customRules: customRule[] = [];
+
+export const reloadCustomIcons = () => {
+    customRules = parseCustomIcons(globals.pluginConfig.customIcons);
+    globals.favIconsCache.clear();
+}
 
 // External links favicons
 export const setFavicons = async (extLinkList?: HTMLElement[]) => {
@@ -100,6 +108,14 @@ const getFaviconData = async (url: string): Promise<favRecord> => {
         src: ''
     };
     const { hostname, protocol } = new URL(url);
+    // A user rule outranks everything, including the built-in matches
+    const custom = matchCustomRule(customRules, url, hostname);
+    if (custom) {
+        return favIcon = {
+            format: isImageUrl(custom.icon) ? 'img' : 'svg',
+            src: isImageUrl(custom.icon) ? custom.icon : customIconMarkup(custom)
+        };
+    }
     // email
     if (protocol === 'message:' || protocol === 'mailto:') {
         return favIcon = {
@@ -264,6 +280,7 @@ export const toggleInheritExtColor = () => {
 export const faviconsLoad = async () => {
     if (globals.pluginConfig.faviconsEnabled) {
         logseq.provideStyle({ key: 'awLi-favicon-css', style: favIconsStyles });
+        customRules = parseCustomIcons(globals.pluginConfig.customIcons);
         setTimeout(() => {
             globals.favIconsCache = new Map();
             setFavicons();

@@ -29,7 +29,26 @@ Every external link gets the favicon of its host, cached per hostname. Optionall
 | `faviconsEnabled` | on | Favicons for external links |
 | `inheritExtColor` | on | External link takes the color of the first inline tag/ref |
 | `pageIconsEnabled` | on | Icons and colors for internal links |
+| `customIcons` | empty | Favicon rules for hosts no public resolver can see |
 | `fixLowContrast` | off | Black/white text stroke on low-contrast link colors |
+
+### Custom favicon rules
+
+A private Confluence, an internal wiki or any other host behind a login is
+invisible to the public favicon services, so it has no icon to find. Name those
+hosts explicitly in `customIcons`, one rule per line:
+
+```
+atlassian.cloud.deliveryhero.group :: ti:notebook #0052CC
+*.corp.example.com                 :: 📗
+wiki.corp/handbook                 :: https://wiki.corp/logo.png
+```
+
+A match containing `/` is tested against the whole URL; otherwise it is a
+hostname and covers its subdomains. An icon is a Tabler id prefixed `ti:` (the
+ids the Logseq icon picker uses), an image URL, or any text or emoji. A trailing
+hex value colors the icon. These rules are checked before the built-in ones, so
+they can override any of them.
 
 ## Install
 
