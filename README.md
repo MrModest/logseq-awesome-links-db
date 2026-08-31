@@ -36,19 +36,31 @@ Every external link gets the favicon of its host, cached per hostname. Optionall
 
 A private Confluence, an internal wiki or any other host behind a login is
 invisible to the public favicon services, so it has no icon to find. Name those
-hosts explicitly in `customIcons`, one rule per line:
+hosts explicitly in `customIcons`.
 
-```
-atlassian.cloud.deliveryhero.group :: ti:notebook #0052CC
-*.corp.example.com                 :: 📗
-wiki.corp/handbook                 :: https://wiki.corp/logo.png
+The setting is a JSON array — open it with **Edit settings file** under the
+setting. Entries are objects, or `match :: icon [color]` strings:
+
+```json
+"customIcons": [
+  { "match": "atlassian.cloud.example.com", "icon": "ti:notebook", "color": "#0052CC" },
+  { "match": "wiki.corp/handbook", "icon": "https://wiki.corp/logo.png" },
+  { "match": "dev.example.com", "icon": "data:image/x-icon;base64,AAABAAEAEBAA..." },
+  "intranet.corp :: 📗"
+]
 ```
 
 A match containing `/` is tested against the whole URL; otherwise it is a
 hostname and covers its subdomains. An icon is a Tabler id prefixed `ti:` (the
-ids the Logseq icon picker uses), an image URL, or any text or emoji. A trailing
-hex value colors the icon. These rules are checked before the built-in ones, so
-they can override any of them.
+ids the Logseq icon picker uses), an image URL, a `data:` URI, or any text or
+emoji. These rules are checked before the built-in ones, so they can override
+any of them.
+
+To use an icon file you have locally, inline it:
+
+```bash
+printf '%s\n' "$(base64 -i favicon.ico | tr -d '\n')"
+```
 
 ## Install
 
