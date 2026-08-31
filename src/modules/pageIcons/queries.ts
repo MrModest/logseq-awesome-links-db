@@ -34,29 +34,50 @@ const escapeForEdn = (title: string): string => {
     return title.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
+// Datascript results reach the plugin as plain JS, but the exact key spelling
+// depends on how the keywords were converted, so read them leniently.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const readKey = (obj: any, name: string): any => {
+    if (!obj || typeof obj !== 'object') {
+        return undefined;
+    }
+    const keys = Object.keys(obj);
+    for (let i = 0; i < keys.length; i++) {
+        const bare = keys[i].replace(/^:/, '').split('/').pop();
+        if (bare === name) {
+            return obj[keys[i]];
+        }
+    }
+    return undefined;
+}
+
 const normalizeIcon = (icon: rawIcon): iconObject | null => {
-    if (!icon || !icon.id) {
+    const id = readKey(icon, 'id');
+    if (!id || typeof id !== 'string') {
         return null;
     }
+    const type = String(readKey(icon, 'type') || 'tabler-icon').replace(/^:/, '');
+    const color = readKey(icon, 'color');
     return {
-        id: icon.id,
-        type: icon.type || 'tabler-icon',
-        color: icon.color || '',
+        id: id.replace(/^:/, ''),
+        type,
+        color: typeof color === 'string' ? color : '',
     };
 }
 
 // Own icon wins; otherwise the first user tag that has one, matching the order
 // Logseq itself uses (ascending :db/id).
 const resolveIcon = (node: rawNode): iconObject | null => {
-    const ownIcon = normalizeIcon(node['logseq.property/icon']);
+    const ownIcon = normalizeIcon(readKey(node, 'icon'));
     if (ownIcon) {
         return ownIcon;
     }
-    const tags = (node['block/tags'] || [])
-        .filter((tag) => !String(tag['db/ident'] || '').startsWith(BUILTIN_IDENT_PREFIX))
-        .sort((a, b) => (a['db/id'] || 0) - (b['db/id'] || 0));
-    for (let i = 0; i < tags.length; i++) {
-        const tagIcon = normalizeIcon(tags[i]['logseq.property/icon']);
+    const tags: rawTag[] = readKey(node, 'tags') || [];
+    const userTags = tags
+        .filter((tag) => !String(readKey(tag, 'ident') || '').replace(/^:/, '').startsWith(BUILTIN_IDENT_PREFIX))
+        .sort((a, b) => (readKey(a, 'id') || 0) - (readKey(b, 'id') || 0));
+    for (let i = 0; i < userTags.length; i++) {
+        const tagIcon = normalizeIcon(readKey(userTags[i], 'icon'));
         if (tagIcon) {
             return tagIcon;
         }
