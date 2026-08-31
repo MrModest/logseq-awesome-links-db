@@ -2,7 +2,8 @@
 
 Icons and colors for links in **Logseq DB (V2)** graphs.
 
-A DB-only fork of [yoyurec/logseq-awesome-links](https://github.com/yoyurec/logseq-awesome-links). File-graph support is removed.
+A DB-only fork of [logseq-awesome-links](https://github.com/yoyurec/logseq-awesome-links)
+by [yoyurec](https://github.com/yoyurec). File-graph support is removed.
 
 ## What it does
 
@@ -85,6 +86,14 @@ Then in Logseq: `⋯` → **Plugins** → **Load unpacked plugin** → pick this
 | `src/modules/linksObserver/` | MutationObserver that catches newly rendered links |
 | `src/plugin/` | Bootstrap and settings schema |
 
+## Credits
+
+Built on [logseq-awesome-links](https://github.com/yoyurec/logseq-awesome-links) by
+Yuriy Piskun ([yoyurec](https://github.com/yoyurec)), which this fork rewrites for DB
+graphs. The favicon and link-observer modules are largely his work.
+
+Maintained by [MrModest](https://github.com/MrModest) — babaevkamil@gmail.com
+
 ## License
 
-MIT, as upstream.
+MIT, as upstream. Copyright is held jointly by the original author and this fork.

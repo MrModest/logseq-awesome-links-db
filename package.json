@@ -2,7 +2,7 @@
   "name": "logseq-awesome-links-db",
   "description": "Logseq DB (V2): tag-inherited node icons and colors for internal links, favicons for external links",
   "version": "2.0.0",
-  "author": "yoyurec <yoyurec@gmail.com>",
+  "author": "MrModest <babaevkamil@gmail.com>",
   "main": "dist/index.html",
   "scripts": {
     "dev": "vite",
@@ -28,5 +28,8 @@
     "id": "logseq-awesome-links-db"
   },
   "repository": "https://github.com/MrModest/logseq-awesome-links-db.git",
-  "effect": true
+  "effect": true,
+  "contributors": [
+    "yoyurec <yoyurec@gmail.com>"
+  ]
 }
