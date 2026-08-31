@@ -1,0 +1,50 @@
+name: Build plugin
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PLUGIN_NAME: logseq-awesome-links-db
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Package
+        run: |
+          mkdir ${{ env.PLUGIN_NAME }}
+          cp -r dist README.md LICENSE package.json icon.png screenshots ${{ env.PLUGIN_NAME }}
+          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+
+      - name: Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          draft: false
+          prerelease: false
+          artifacts: "${{ env.PLUGIN_NAME }}.zip,package.json"
+          token: ${{ secrets.GITHUB_TOKEN }}
