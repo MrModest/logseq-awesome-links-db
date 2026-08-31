@@ -1,0 +1,21 @@
+src/modules/favIcons/favIcons.ts
+  s_f692d5ce974a88::t_b6ec3f94eada37 8-10,55-59,63-66,170
+src/modules/utils.ts
+  s_f692d5ce974a88::t_f4a3fed456cfba 21-25,27-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "d7f34e279e7340a77791ccffab16b1f5ed1a297d",
+  "prompts": {},
+  "sessions": {
+    "s_f692d5ce974a88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81a894f5-26e2-4b0e-bf52-b6683ce44a9e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
