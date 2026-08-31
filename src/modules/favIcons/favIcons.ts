@@ -190,6 +190,13 @@ const getFaviconData = async (url: string): Promise<favRecord> => {
             src: 'https://ssl.gstatic.com/images/branding/product/1x/drive_2020q4_32dp.png'
         }
     }
+    // A hosted Grafana org is private, so the resolver answers 404 for it
+    if (hostname === 'grafana.com' || hostname.endsWith('.grafana.net') || hostname.endsWith('.grafana.com')) {
+        return favIcon = {
+            format: 'img',
+            src: 'https://grafana.com/static/assets/img/fav32.png'
+        }
+    }
     // Workspace hosts are private, so no public resolver can see their icon
     if (hostname === 'slack.com' || hostname.endsWith('.slack.com')) {
         return favIcon = {
