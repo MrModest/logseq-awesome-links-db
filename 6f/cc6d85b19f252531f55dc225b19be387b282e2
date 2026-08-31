@@ -1,0 +1,19 @@
+README.md
+  s_f692d5ce974a88::t_70f70a3164b101 8-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "6fcc6d85b19f252531f55dc225b19be387b282e2",
+  "prompts": {},
+  "sessions": {
+    "s_f692d5ce974a88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81a894f5-26e2-4b0e-bf52-b6683ce44a9e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
