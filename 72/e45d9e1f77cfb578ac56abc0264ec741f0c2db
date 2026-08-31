@@ -1,0 +1,19 @@
+src/modules/pageIcons/pageIcons.css
+  s_f692d5ce974a88::t_c62781cfa1c123 3-13,20,23,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "72e45d9e1f77cfb578ac56abc0264ec741f0c2db",
+  "prompts": {},
+  "sessions": {
+    "s_f692d5ce974a88": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81a894f5-26e2-4b0e-bf52-b6683ce44a9e",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
