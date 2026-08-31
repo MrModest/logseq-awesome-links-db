@@ -20,9 +20,13 @@ type rawNode = {
     'block/tags'?: rawTag[];
 };
 
-// Built-in classes (Page, Journal, Tag, Task...) carry generic icons that would
-// drown out the user's own tags, so they never act as an inheritance source.
+// A node's own tags say more about it than the built-in class it belongs to, so
+// Journal or Query only supplies an icon when no user tag has one.
 const BUILTIN_IDENT_PREFIX = 'logseq.';
+
+const isBuiltinTag = (tag: rawTag): boolean => {
+    return String(readKey(tag, 'ident') || '').replace(/^:/, '').startsWith(BUILTIN_IDENT_PREFIX);
+}
 
 const iconsCache = new Map<string, iconObject>();
 
@@ -74,11 +78,10 @@ const resolveIcon = (node: rawNode): iconObject | null => {
         return ownIcon;
     }
     const tags: rawTag[] = readKey(node, 'tags') || [];
-    const userTags = tags
-        .filter((tag) => !String(readKey(tag, 'ident') || '').replace(/^:/, '').startsWith(BUILTIN_IDENT_PREFIX))
-        .sort((a, b) => (readKey(a, 'id') || 0) - (readKey(b, 'id') || 0));
-    for (let i = 0; i < userTags.length; i++) {
-        const tagIcon = normalizeIcon(readKey(userTags[i], 'icon'));
+    const byId = [...tags].sort((a, b) => (readKey(a, 'id') || 0) - (readKey(b, 'id') || 0));
+    const ordered = [...byId.filter((tag) => !isBuiltinTag(tag)), ...byId.filter(isBuiltinTag)];
+    for (let i = 0; i < ordered.length; i++) {
+        const tagIcon = normalizeIcon(readKey(ordered[i], 'icon'));
         if (tagIcon) {
             tagIcon.own = false;
             return tagIcon;

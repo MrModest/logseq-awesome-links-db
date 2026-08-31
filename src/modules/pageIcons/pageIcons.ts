@@ -3,6 +3,7 @@ import fastdom from 'fastdom'
 import { body, doc, globals, iconObject, root } from '../globals';
 import { isNeedLowContrastFix, injectPluginCSS, ejectPluginCSS } from '../utils';
 import { getPropsByPageName, clearIconsCache } from './queries';
+import { resolveTablerId } from './tablerIcon';
 
 import pageIconsStyles from  './pageIcons.css?inline';
 import tabsIframeStyles from  './tabsIframe.css?inline';
@@ -138,7 +139,7 @@ const iconMarkup = (pageIcon: iconObject): string => {
     const color = pageIcon.color ? ` style="color:${pageIcon.color}"` : '';
     const inner = isEmoji
         ? `<em-emoji id="${pageIcon.id}"></em-emoji>`
-        : `<i class="ti ti-${pageIcon.id}"></i>`;
+        : `<i class="ti ti-${resolveTablerId(pageIcon.id || '')}"></i>`;
     return `<span class="awLi-icon" data-is-emoji="${isEmoji}"${color}>${inner}</span>`;
 }
 
