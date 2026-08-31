@@ -18,7 +18,15 @@ export const getBase64FromUrl = async (url: string): Promise<string> => {
     } catch (error) {
         return '';
     }
+    // A favicon service answers for a host it cannot see with an error page,
+    // which would otherwise be handed to an <img> as a text/html data URI
+    if (!data.ok) {
+        return '';
+    }
     const blob = await data.blob();
+    if (!blob.type.startsWith('image/')) {
+        return '';
+    }
     return new Promise((resolve) => {
         const reader = new FileReader();
         reader.readAsDataURL(blob);
