@@ -27,6 +27,23 @@ export const setFavicons = async (extLinkList?: HTMLElement[]) => {
     }
 }
 
+// One host can serve several products - docs.google.com/document and
+// docs.google.com/spreadsheets get different icons - so the first path
+// segment belongs in the key alongside the hostname.
+const getCacheKey = (url: string): string => {
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch (error) {
+        return '';
+    }
+    if (!parsed.hostname) {
+        return '';
+    }
+    const firstSegment = parsed.pathname.split('/').filter(Boolean)[0] || '';
+    return `${parsed.hostname}/${firstSegment}`;
+}
+
 const setIconToExtItem = async (extLinkItem: HTMLAnchorElement) => {
     const oldFav = extLinkItem.querySelector('.awLi-favicon');
     if (oldFav) {
@@ -37,18 +54,18 @@ const setIconToExtItem = async (extLinkItem: HTMLAnchorElement) => {
         format: 'img',
         src: ''
     };
-    const { hostname } = new URL(url);
-    if (!hostname) {
+    const cacheKey = getCacheKey(url);
+    if (!cacheKey) {
         // skip cache for strange URIs
         faviconData = await getFaviconData(url);
     } else {
-        if (globals.favIconsCache.has(hostname)) {
+        if (globals.favIconsCache.has(cacheKey)) {
             // try from cache
-            faviconData = globals.favIconsCache.get(hostname);
+            faviconData = globals.favIconsCache.get(cacheKey);
         } else {
             // no? get fresh + save to cache
             faviconData = await getFaviconData(url);
-            globals.favIconsCache.set(hostname, faviconData);
+            globals.favIconsCache.set(cacheKey, faviconData);
         }
     }
     if (faviconData.format === 'img') {
