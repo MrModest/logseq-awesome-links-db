@@ -1,7 +1,7 @@
 {
   "name": "logseq-awesome-links-db",
   "description": "Logseq DB (V2): tag-inherited node icons and colors for internal links, favicons for external links",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "MrModest <babaevkamil@gmail.com>",
   "main": "dist/index.html",
   "scripts": {
