@@ -6,9 +6,12 @@
     width: 1.15em;
     height: 1.15em;
     margin-right: 0.3em;
-    /* Centering on the text's middle rather than its baseline keeps the icon
-       placed the same in body text, a tag pill and a page title */
+    /* `middle` centers on the x-height, which reads low beside the capitals
+       and digits most page names start with, so lift it by the difference
+       between half the x-height and half the cap height */
     vertical-align: middle;
+    position: relative;
+    top: -0.08em;
     font-size: 1em;
     line-height: 1;
     font-weight: 400;
