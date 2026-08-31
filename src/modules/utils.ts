@@ -10,33 +10,6 @@ export const objectDiff = (orig: object, updated: object) => {
     return difference;
 }
 
-// Generate Base64 from image URL
-export const getBase64FromUrl = async (url: string): Promise<string> => {
-    let data;
-    try {
-        data = await fetch(url);
-    } catch (error) {
-        return '';
-    }
-    // A favicon service answers for a host it cannot see with an error page,
-    // which would otherwise be handed to an <img> as a text/html data URI
-    if (!data.ok) {
-        return '';
-    }
-    const blob = await data.blob();
-    if (!blob.type.startsWith('image/')) {
-        return '';
-    }
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        reader.onloadend = () => {
-            const base64data = reader.result as string;
-            resolve(base64data);
-        }
-    });
-}
-
 export const isNeedLowContrastFix = (color: string, bg: string) => {
     return hasBadContrast(color, 'decorative', bg) ? true : false;
 }
