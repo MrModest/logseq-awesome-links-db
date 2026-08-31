@@ -1,34 +1,29 @@
 /* icons */
 .awLi-icon {
-    position: relative;
-    top: 2px;
-    display: inline-block;
-    margin-right: 5px;
-    width: 16px;
-    height: 16px;
-    text-align: center;
-    font-size: 1.1em;
-    line-height: 1.26em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    margin-right: 0.3em;
+    /* Sized and shifted in em so the icon keeps its place inside a small tag
+       pill as well as a page title */
+    vertical-align: -0.15em;
+    font-size: 1em;
+    line-height: 1;
     font-weight: 400;
     color: var(--awLi-icon-color, inherit);
 }
 .awLi-icon .ti {
     position: static;
     margin: 0;
+    line-height: 1;
 }
 .awLi-icon[data-is-emoji="true"] {
-    top: 0;
-    font-size: 0.9em !important;
+    font-size: 0.9em;
 }
 .title .awLi-icon {
-    top: 0;
-    width: 1em;
-    height: 1em;
-    line-height: inherit;
-}
-.title .awLi-icon[data-is-emoji="true"] {
-    line-height: 1.7em;
-    margin-right: 0.6em;
+    margin-right: 0.4em;
 }
 
 .awLi-nativeIconHidden {
