@@ -56,6 +56,11 @@ body:not(.awLi-tagHasBg) .tag.awLi-color {
     color: var(--ls-primary-background-color);
     background-color: var(--awLi-color) !important;
 }
+/* The pill is painted in the icon's own color, so the icon has to drop its
+   inline color and read as foreground instead of vanishing into the fill. */
+.awLi-tagHasBg .tag.awLi-color .awLi-icon {
+    color: var(--ls-primary-background-color) !important;
+}
 
 /* low contrast stroke */
 [data-theme="light"] .awLi-stroke {
