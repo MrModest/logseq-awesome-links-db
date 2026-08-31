@@ -6,9 +6,9 @@
     width: 1.15em;
     height: 1.15em;
     margin-right: 0.3em;
-    /* Sized and shifted in em so the icon keeps its place inside a small tag
-       pill as well as a page title */
-    vertical-align: -0.15em;
+    /* Centering on the text's middle rather than its baseline keeps the icon
+       placed the same in body text, a tag pill and a page title */
+    vertical-align: middle;
     font-size: 1em;
     line-height: 1;
     font-weight: 400;
