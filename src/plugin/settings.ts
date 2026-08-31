@@ -5,7 +5,6 @@ import { toggleIconsFeature } from '../modules/pageIcons/pageIcons';
 
 import { objectDiff } from '../modules/utils';
 
-import './settings.css';
 import { settingsConfig } from './settingsConfig';
 
 export const settingsLoad = () => {

@@ -1,12 +1,10 @@
 
 import { faviconsLoad, faviconsUnload } from '../modules/favIcons/favIcons';
-import { body, doc, globals } from '../modules/globals';
+import { body, globals } from '../modules/globals';
 import { initLinksObserver, runLinksObserver, initTabsObserver, runTabsObserver, stopLinksObserver, stopTabsObserver } from '../modules/linksObserver/linksObserver';
 import { pageIconsLoad, pageIconsUnload } from '../modules/pageIcons/pageIcons';
 
 export const pluginLoad = () => {
-    registerPlugin();
-
     runStuff();
 
     setTimeout(() => {
@@ -15,14 +13,6 @@ export const pluginLoad = () => {
             stopStuff();
         });
     }, 2000)
-}
-
-const registerPlugin = async () => {
-    setTimeout(() => {
-        if (doc.head) {
-            doc.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" id="css-awLi" href="lsp://logseq.io/${globals.pluginID}/dist/assets/awesomeLinks.css">`)
-        }
-    }, 500);
 }
 
 export const runStuff = async () => {

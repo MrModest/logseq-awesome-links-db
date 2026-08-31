@@ -70,6 +70,7 @@ const normalizeIcon = (icon: rawIcon): iconObject | null => {
 const resolveIcon = (node: rawNode): iconObject | null => {
     const ownIcon = normalizeIcon(readKey(node, 'icon'));
     if (ownIcon) {
+        ownIcon.own = true;
         return ownIcon;
     }
     const tags: rawTag[] = readKey(node, 'tags') || [];
@@ -79,6 +80,7 @@ const resolveIcon = (node: rawNode): iconObject | null => {
     for (let i = 0; i < userTags.length; i++) {
         const tagIcon = normalizeIcon(readKey(userTags[i], 'icon'));
         if (tagIcon) {
+            tagIcon.own = false;
             return tagIcon;
         }
     }

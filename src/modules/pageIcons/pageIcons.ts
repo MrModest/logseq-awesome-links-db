@@ -144,14 +144,35 @@ const iconMarkup = (pageIcon: iconObject): string => {
 
 const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
     linkItem.querySelector('.awLi-icon')?.remove();
+    const nativeIcon = findNativeIcon(linkItem);
     if (!pageIcon.id) {
+        showNativeIcon(nativeIcon);
         return;
     }
-    // Logseq already draws an icon for nodes that own one - don't duplicate it
-    if (linkItem.querySelector(globals.nativeIconSelector)) {
+    // A node that owns its icon is already drawn correctly by Logseq
+    if (nativeIcon && pageIcon.own) {
+        showNativeIcon(nativeIcon);
         return;
     }
+    // An inherited icon replaces the generic placeholder Logseq falls back to
+    hideNativeIcon(nativeIcon);
     linkItem.insertAdjacentHTML('afterbegin', iconMarkup(pageIcon));
+}
+
+// Inline links contain their icon; sidebar entries keep it as a sibling of the
+// title, inside the shared anchor.
+const findNativeIcon = (linkItem: HTMLElement): HTMLElement | null => {
+    return linkItem.querySelector(globals.nativeIconSelector)
+        || linkItem.parentElement?.querySelector(globals.nativeSiblingIconSelector)
+        || null;
+}
+
+const hideNativeIcon = (nativeIcon: HTMLElement | null) => {
+    nativeIcon?.classList.add('awLi-nativeIconHidden');
+}
+
+const showNativeIcon = (nativeIcon: HTMLElement | null) => {
+    nativeIcon?.classList.remove('awLi-nativeIconHidden');
 }
 
 const setColorToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
@@ -212,6 +233,7 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
             linkItem.classList.remove('awLi-color');
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
+            showNativeIcon(findNativeIcon(linkItem));
         }
     }
 }

@@ -31,6 +31,10 @@
     margin-right: 0.6em;
 }
 
+.awLi-nativeIconHidden {
+    display: none !important;
+}
+
 /* color */
 .awLi-color:is(
     .page-ref,
