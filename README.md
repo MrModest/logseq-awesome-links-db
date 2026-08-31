@@ -5,6 +5,13 @@ Icons and colors for links in **Logseq DB (V2)** graphs.
 A DB-only fork of [logseq-awesome-links](https://github.com/yoyurec/logseq-awesome-links)
 by [yoyurec](https://github.com/yoyurec). File-graph support is removed.
 
+![Internal links carrying the icon and color of their tag, external links carrying favicons](screenshots/awesome-links-db.png)
+
+Every icon above is inherited: none of those pages carries an icon of its own.
+`Orbital Rewrite` and `Harbour Migration` are tagged `#Project`, `Ada Lovelace`
+and `Grace Hopper` are `#Person`, and each takes the icon and color set on the
+tag. The external links show the built-in favicon rules.
+
 ## What it does
 
 ### Internal links inherit the icon and color of their tag
