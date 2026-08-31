@@ -2,13 +2,12 @@
 // internal wiki - are invisible to every public favicon resolver, so the only
 // way to give them an icon is to say so explicitly.
 //
-// The setting is a JSON array, of either objects or `match :: icon [color]`
-// strings:
+// The setting is a JSON array:
 //
 //   "customIcons": [
 //     { "match": "atlassian.cloud.example.com", "icon": "ti:notebook", "color": "#0052CC" },
 //     { "match": "wiki.corp/handbook", "icon": "https://wiki.corp/logo.png" },
-//     "intranet.corp :: 📗"
+//     { "match": "intranet.corp", "icon": "📗" }
 //   ]
 //
 // A match containing `/` is tested against the whole URL; otherwise it is a
@@ -23,58 +22,33 @@ export interface customRule {
     color: string;
 }
 
-type ruleInput = string | { match?: string; icon?: string; color?: string };
-
-const buildRule = (match: string, icon: string, color: string): customRule | null => {
-    const cleanMatch = match.trim().toLowerCase().replace(/^\*\./, '');
-    const cleanIcon = icon.trim();
-    if (!cleanMatch || !cleanIcon) {
-        return null;
-    }
-    return {
-        match: cleanMatch,
-        isUrlMatch: cleanMatch.includes('/'),
-        icon: cleanIcon,
-        color: color.trim(),
-    };
+interface ruleInput {
+    match?: string;
+    icon?: string;
+    color?: string;
 }
 
-const parseRuleLine = (line: string): customRule | null => {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('::')) {
-        return null;
-    }
-    const separatorAt = trimmed.indexOf('::');
-    const iconSpec = trimmed.slice(separatorAt + 2).trim();
-    // A trailing hex value is a color for the icon, not part of it
-    const colorMatch = iconSpec.match(/\s(#[0-9a-fA-F]{3,8})$/);
-    return buildRule(
-        trimmed.slice(0, separatorAt),
-        colorMatch ? iconSpec.slice(0, colorMatch.index).trim() : iconSpec,
-        colorMatch ? colorMatch[1] : ''
-    );
-}
-
-// Accepts the JSON array the setting now holds, and the newline-separated
-// string earlier versions stored, so an existing value keeps working.
 export const parseCustomIcons = (setting: unknown): customRule[] => {
-    let entries: ruleInput[] = [];
-    if (Array.isArray(setting)) {
-        entries = setting;
-    } else if (typeof setting === 'string') {
-        entries = setting.split('\n');
-    }
     const rules: customRule[] = [];
-    for (let i = 0; i < entries.length; i++) {
-        const entry = entries[i];
-        const rule = typeof entry === 'string'
-            ? parseRuleLine(entry)
-            : entry && entry.match && entry.icon
-                ? buildRule(entry.match, entry.icon, entry.color || '')
-                : null;
-        if (rule) {
-            rules.push(rule);
+    if (!Array.isArray(setting)) {
+        return rules;
+    }
+    for (let i = 0; i < setting.length; i++) {
+        const entry = setting[i] as ruleInput;
+        if (!entry || !entry.match || !entry.icon) {
+            continue;
         }
+        const match = entry.match.trim().toLowerCase().replace(/^\*\./, '');
+        const icon = entry.icon.trim();
+        if (!match || !icon) {
+            continue;
+        }
+        rules.push({
+            match,
+            isUrlMatch: match.includes('/'),
+            icon,
+            color: (entry.color || '').trim(),
+        });
     }
     return rules;
 }

@@ -39,7 +39,7 @@ export const settingsConfig: SettingSchemaDesc[] = [
     {
         key: 'customIconsHeading',
         title: 'Custom icons',
-        description: 'Icons for hosts no public favicon service can see, such as a private Confluence or an internal wiki. Edit the settings file below and fill customIcons with an array, of either objects or "match :: icon [color]" strings. A match containing / is tested against the whole URL, otherwise it is a hostname and covers its subdomains. An icon is a Tabler id prefixed ti: (the same ids the Logseq icon picker uses), an image URL, or any text or emoji. These rules take priority over the built-in ones.',
+        description: 'Icons for hosts no public favicon service can see, such as a private Confluence or an internal wiki. Edit the settings file below and fill customIcons with an array of { match, icon, color } objects. A match containing / is tested against the whole URL, otherwise it is a hostname and covers its subdomains. An icon is a Tabler id prefixed ti: (the same ids the Logseq icon picker uses), an image URL, or any text or emoji. These rules take priority over the built-in ones.',
         type: 'heading',
         default: null,
     },

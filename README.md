@@ -38,22 +38,22 @@ A private Confluence, an internal wiki or any other host behind a login is
 invisible to the public favicon services, so it has no icon to find. Name those
 hosts explicitly in `customIcons`.
 
-The setting is a JSON array — open it with **Edit settings file** under the
-setting. Entries are objects, or `match :: icon [color]` strings:
+The setting is a JSON array of `{ match, icon, color }` objects — open it with
+**Edit settings file** under the setting:
 
 ```json
 "customIcons": [
   { "match": "atlassian.cloud.example.com", "icon": "ti:notebook", "color": "#0052CC" },
   { "match": "wiki.corp/handbook", "icon": "https://wiki.corp/logo.png" },
   { "match": "dev.example.com", "icon": "data:image/x-icon;base64,AAABAAEAEBAA..." },
-  "intranet.corp :: 📗"
+  { "match": "intranet.corp", "icon": "📗" }
 ]
 ```
 
 A match containing `/` is tested against the whole URL; otherwise it is a
 hostname and covers its subdomains. An icon is a Tabler id prefixed `ti:` (the
 ids the Logseq icon picker uses), an image URL, a `data:` URI, or any text or
-emoji. These rules are checked before the built-in ones, so they can override
+emoji. `color` is optional. These rules are checked before the built-in ones, so they can override
 any of them.
 
 To use an icon file you have locally, inline it:
