@@ -92,7 +92,7 @@ Built on [logseq-awesome-links](https://github.com/yoyurec/logseq-awesome-links)
 Yuriy Piskun ([yoyurec](https://github.com/yoyurec)), which this fork rewrites for DB
 graphs. The favicon and link-observer modules are largely his work.
 
-Maintained by [MrModest](https://github.com/MrModest) — babaevkamil@gmail.com
+Maintained by [MrModest](https://github.com/MrModest).
 
 ## License
 
