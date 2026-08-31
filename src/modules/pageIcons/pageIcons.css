@@ -1,7 +1,4 @@
 /* icons */
-.is-awLi-enabled .page-icon:not(.whiteboard-page .page-icon) {
-    display: none !important;
-}
 .awLi-icon {
     position: relative;
     top: 2px;
@@ -10,9 +7,14 @@
     width: 16px;
     height: 16px;
     text-align: center;
-    font-size: 1.2em;
+    font-size: 1.1em;
     line-height: 1.26em;
     font-weight: 400;
+    color: var(--awLi-icon-color, inherit);
+}
+.awLi-icon .ti {
+    position: static;
+    margin: 0;
 }
 .awLi-icon[data-is-emoji="true"] {
     top: 0;
@@ -28,9 +30,6 @@
     line-height: 1.7em;
     margin-right: 0.6em;
 }
-.awLi-hideTitle .awLi-icon {
-    margin-right: 0;
-}
 
 /* color */
 .awLi-color:is(
@@ -42,15 +41,17 @@
     color: var(--awLi-color) !important;
 }
 
-/* tags magic color/bg */
+/* tags magic color/bg - `a.tag` resolves its color through --lx-accent-11 */
 body:not(.awLi-tagHasBg) .tag.awLi-color {
     color: var(--awLi-color) !important;
+    --lx-accent-11: var(--awLi-color);
+    --ls-tag-text-color: var(--awLi-color);
+    opacity: 1;
 }
 .awLi-tagHasBg .tag.awLi-color {
     color: var(--ls-primary-background-color);
     background-color: var(--awLi-color) !important;
 }
-
 
 /* low contrast stroke */
 [data-theme="light"] .awLi-stroke {
@@ -58,11 +59,4 @@ body:not(.awLi-tagHasBg) .tag.awLi-color {
 }
 [data-theme="dark"] .awLi-stroke {
     -webkit-text-stroke: 0.3px #ffffff88;
-}
-
-
-/* hide other themes calendar icons */
-.ls-page-title::before,
-.journal-title .title::before {
-    display: none !important;
 }

@@ -1,10 +1,9 @@
 import { LSPluginBaseInfo } from '@logseq/libs/dist/LSPlugin.user';
 import { toggleFaviconsFeature, toggleInheritExtColor } from '../modules/favIcons/favIcons';
 import { globals } from '../modules/globals';
-import { toggleIconFontFeature } from '../modules/iconFont/iconFont';
 import { toggleIconsFeature } from '../modules/pageIcons/pageIcons';
 
-import { objectDiff, settingsTextToPropsObj } from '../modules/utils';
+import { objectDiff } from '../modules/utils';
 
 import './settings.css';
 import { settingsConfig } from './settingsConfig';
@@ -19,9 +18,6 @@ export const settingsLoad = () => {
  }
 
 const onSettingsChangedCallback = (settings: LSPluginBaseInfo['settings'], oldSettings: LSPluginBaseInfo['settings']) => {
-    globals.defaultPageProps = settingsTextToPropsObj(globals.pluginConfig.defaultPageProps);
-    globals.defaultJournalProps = settingsTextToPropsObj(globals.pluginConfig.defaultJournalProps);
-
     globals.pluginConfig = { ...settings };
     const settingsDiff = objectDiff({ ...oldSettings }, globals.pluginConfig)
     if (settingsDiff.includes('faviconsEnabled')) {
@@ -30,10 +26,7 @@ const onSettingsChangedCallback = (settings: LSPluginBaseInfo['settings'], oldSe
     if (settingsDiff.includes('inheritExtColor')) {
         toggleInheritExtColor();
     }
-    if (settingsDiff.includes('pageIconsEnabled') || settingsDiff.includes('inheritFromHierarchy') || settingsDiff.includes('defaultJournalProps') || settingsDiff.includes('fixLowContrast')) {
+    if (settingsDiff.includes('pageIconsEnabled') || settingsDiff.includes('fixLowContrast')) {
         toggleIconsFeature();
-    }
-    if (settingsDiff.includes('iconFont')) {
-        toggleIconFontFeature();
     }
 }

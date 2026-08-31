@@ -2,9 +2,7 @@
 import { faviconsLoad, faviconsUnload } from '../modules/favIcons/favIcons';
 import { body, doc, globals } from '../modules/globals';
 import { initLinksObserver, runLinksObserver, initTabsObserver, runTabsObserver, stopLinksObserver, stopTabsObserver } from '../modules/linksObserver/linksObserver';
-import { iconFontLoad, iconFontUnload } from '../modules/iconFont/iconFont';
 import { pageIconsLoad, pageIconsUnload } from '../modules/pageIcons/pageIcons';
-import { checkUpdate } from '../modules/utils';
 
 export const pluginLoad = () => {
     registerPlugin();
@@ -17,12 +15,6 @@ export const pluginLoad = () => {
             stopStuff();
         });
     }, 2000)
-
-    if (globals.pluginConfig.featureUpdaterEnabled) {
-        setTimeout(() => {
-            checkUpdate();
-        }, 8000)
-    }
 }
 
 const registerPlugin = async () => {
@@ -35,7 +27,6 @@ const registerPlugin = async () => {
 
 export const runStuff = async () => {
     body.classList.add(globals.isPluginEnabled);
-    iconFontLoad();
     setTimeout(() => {
         pageIconsLoad();
         faviconsLoad();
@@ -56,7 +47,6 @@ export const stopStuff = () => {
     body.classList.remove(globals.isPluginEnabled);
     pageIconsUnload();
     faviconsUnload();
-    iconFontUnload();
     stopLinksObserver();
     stopTabsObserver();
 }

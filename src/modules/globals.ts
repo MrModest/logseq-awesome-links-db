@@ -5,12 +5,12 @@ type globalContextType = {
     [key: string]: any;
 }
 
-export interface propsObject {
-    icon?: string;
+// Logseq DB graphs keep the icon and its colour in a single
+// `:logseq.property/icon` value: `{:type :tabler-icon :id "target" :color "#e47a00"}`.
+export interface iconObject {
+    id?: string;
+    type?: string;
     color?: string;
-    hidetitle?: boolean;
-    hidetitletext?: string;
-    needStroke?: boolean;
 }
 
 export const doc = parent.document;
@@ -26,11 +26,10 @@ export const globals: globalContextType = {
     titleSelector: '.page-title, .journal-title .title',
     sidebarLinkSelector: '.nav-contents-container .page-title',
     tabLinkSelector: '.logseq-tab:not(.close-all) .logseq-tab-title',
+    // Icons Logseq renders itself, so the plugin never doubles up on them
+    nativeIconSelector: '.icon-emoji-wrap, .icon-cp-container',
     tagHasBg: false,
     themeColor: '',
     themeBg: '',
     favIconsCache: Object.create(null),
-    defaultPageProps: Object.create(null),
-    defaultJournalProps: Object.create(null),
 };
-

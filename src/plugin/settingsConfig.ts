@@ -2,13 +2,6 @@ import { SettingSchemaDesc } from '@logseq/libs/dist/LSPlugin.user';
 
 export const settingsConfig: SettingSchemaDesc[] = [
     {
-        key: 'promoAwesomeStyler',
-        title: '',
-        description: '⚡ Also try "Awesome Styler" theme with lots of UI changes and more features! ⚡ https://github.com/yoyurec/logseq-awesome-styler',
-        type: 'boolean',
-        default: false,
-    },
-    {
         key: 'externalHeading',
         title: 'External links',
         description: '',
@@ -39,69 +32,9 @@ export const settingsConfig: SettingSchemaDesc[] = [
     {
         key: 'pageIconsEnabled',
         title: '',
-        description: 'Enable feature: icon/color for internal pages?',
+        description: 'Enable feature: show the node icon and color on internal links. A node without its own icon inherits from its first tag.',
         type: 'boolean',
         default: true,
-    },
-    {
-        key: 'inheritingHeading',
-        title: 'Inheriting',
-        description: '',
-        type: 'heading',
-        default: null,
-    },
-    {
-        key: 'inheritFromProp',
-        title: '',
-        description: 'Inherit page icon/color via custom property (delete to disable)',
-        type: 'string',
-        default: 'page-type',
-    },
-    {
-        key: 'inheritFromHierarchy',
-        title: '',
-        description: 'Inherit page icon/color via hierarchy?',
-        type: 'boolean',
-        default: true,
-    },
-    {
-        key: 'dafaultPropsHeading',
-        title: 'Default props',
-        description: '',
-        type: 'heading',
-        default: null,
-    },
-    {
-        key: 'defaultPageProps',
-        title: '',
-        description: 'Pages default props: icon (emoji or Nerd icon) and color. (Delete to disable)',
-        type: 'string',
-        inputAs: 'textarea',
-        default: `icon::\ncolor::`,
-    },
-    {
-        key: 'defaultJournalProps',
-        title: '',
-        description: 'Journal pages default props: icon (emoji or Nerd icon) and color. (Delete to disable)',
-        type: 'string',
-        inputAs: 'textarea',
-        default: 'icon::\ncolor::',
-    },
-    {
-        key: 'iconsFontHeading',
-        title: 'Additional icons',
-        description: 'extend emoji icons with external set',
-        type: 'heading',
-        default: null,
-    },
-    {
-        key: 'iconFont',
-        title: 'Choose icons set font',
-        description: 'To insert icon:: value, you need to search for icon and copy its glyph. Nerd font - https://www.nerdfonts.com/cheat-sheet, Tabler - use icon-picker from AwesomeProps plugin',
-        type: 'enum',
-        enumPicker: 'radio',
-        enumChoices: ['none', 'nerd', 'tabler-icons'],
-        default: 'tabler-icons',
     },
     {
         key: 'otherHeading',
@@ -116,12 +49,5 @@ export const settingsConfig: SettingSchemaDesc[] = [
         description: '⚠ Experimental: Enable text black/white stroke for low contrast links colors',
         type: 'boolean',
         default: false,
-    },
-    {
-        key: 'featureUpdaterEnabled',
-        title: '',
-        description: 'Enable new version notifier on app load?',
-        type: 'boolean',
-        default: true,
     },
 ];

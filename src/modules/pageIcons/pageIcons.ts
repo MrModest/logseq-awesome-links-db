@@ -1,8 +1,8 @@
 import fastdom from 'fastdom'
 
-import { body, doc, globals, propsObject, root } from '../globals';
-import { settingsTextToPropsObj, isNeedLowContrastFix, isEmoji, injectPluginCSS, ejectPluginCSS } from '../utils';
-import { getPropsByPageName } from './queries';
+import { body, doc, globals, iconObject, root } from '../globals';
+import { isNeedLowContrastFix, injectPluginCSS, ejectPluginCSS } from '../utils';
+import { getPropsByPageName, clearIconsCache } from './queries';
 
 import pageIconsStyles from  './pageIcons.css?inline';
 import tabsIframeStyles from  './tabsIframe.css?inline';
@@ -23,11 +23,13 @@ export const pageIconsLoad = async () => {
     }
     body.classList.add('awLi-icons')
     logseq.provideStyle({ key: 'awLi-icon-css', style: pageIconsStyles });
-    globals.defaultPageProps = settingsTextToPropsObj(globals.pluginConfig.defaultPageProps);
-    globals.defaultJournalProps = settingsTextToPropsObj(globals.pluginConfig.defaultJournalProps);
     setTabsCSS();
     pageIconsRender();
 
+    // Icons live in the graph, so a graph edit can invalidate any cached lookup
+    logseq.DB.onChanged(() => {
+        clearIconsCache();
+    });
     logseq.App.onThemeChanged(() => {
         setTimeout(() => {
             pageIconsRender();
@@ -64,11 +66,11 @@ export const setPageIcons = async (context?: Document | HTMLElement) => {
     }
     const titleLinksList = [...context.querySelectorAll(globals.titleSelector)];
     if (titleLinksList) {
-        setStyleToLinkList(titleLinksList, true);
+        setStyleToLinkList(titleLinksList);
     }
     const pageLinksList = [...context.querySelectorAll(globals.pageLinksSelector)];
     if (pageLinksList.length) {
-        setStyleToLinkList(pageLinksList, true);
+        setStyleToLinkList(pageLinksList);
     }
     const sidebarLinksList = [...context.querySelectorAll(globals.sidebarLinkSelector)];
     if (sidebarLinksList) {
@@ -97,68 +99,67 @@ export const setActiveTabIcon = async () => {
     }
 }
 
-export const setStyleToLinkList = (linkList: HTMLElement[], noDefaultIcon?: boolean) => {
+export const setStyleToLinkList = (linkList: HTMLElement[]) => {
     if (!linkList.length) {
         return;
     }
     for (let i = 0; i < linkList.length; i++) {
         const linkItem = linkList[i];
         fastdom.mutate(() => {
-            processLinkItem(linkItem, noDefaultIcon);
+            processLinkItem(linkItem);
         });
     }
 }
 
-export const processLinkItem = async (linkItem: HTMLElement, noDefaultIcon?: boolean) => {
+export const processLinkItem = async (linkItem: HTMLElement) => {
     const linkText = linkItem.textContent;
-    if (linkText && !linkText.startsWith(' ')) {
-        const pageTitle = linkItem.getAttribute('data-ref') || linkItem.childNodes[1]?.textContent?.trim() || linkItem.textContent?.trim() || '';
-        if (pageTitle) {
-            const pageProps = await getPropsByPageName(pageTitle);
-            if (pageProps) {
-                setIconToLinkItem(linkItem, pageProps, noDefaultIcon);
-                setColorToLinkItem(linkItem, pageProps);
-            }
-        }
-    }
- }
-
-const setIconToLinkItem = async (linkItem: HTMLElement, pageProps: propsObject, noDefaultIcon?: boolean) => {
-    const pageIcon = pageProps['icon'];
-    if (pageIcon === globals.defaultPageProps.icon && noDefaultIcon) {
+    if (!linkText || linkText.startsWith(' ')) {
         return;
     }
-    if (pageIcon && pageIcon !== 'none') {
-
-        const oldPageIcon = linkItem.querySelector('.awLi-icon');
-        oldPageIcon && oldPageIcon.remove();
-        hideTitle(linkItem, pageProps);
-        linkItem.insertAdjacentHTML('afterbegin', `<span class="awLi-icon" data-is-emoji="${isEmoji(pageIcon)}">${pageIcon}</span>`);
+    const pageTitle = getLinkTitle(linkItem);
+    if (!pageTitle) {
+        return;
     }
-}
-
-const hideTitle = (linkItem: HTMLElement, pageProps: propsObject) => {
-    if (pageProps['hidetitle'] && (linkItem.classList.contains('page-ref') || linkItem.classList.contains('tag'))) {
-        linkItem.classList.add('awLi-hideTitle');
-        const linkText = linkItem.textContent;
-        const titleText = pageProps['hidetitletext'] || '';
-        const regexp = new RegExp(titleText, 'i');
-        linkItem.textContent = linkText!.replace(regexp, '');
-    } else {
-        linkItem.classList.remove('awLi-hideTitle');
-    }
+    const pageIcon = await getPropsByPageName(pageTitle);
+    setIconToLinkItem(linkItem, pageIcon);
+    setColorToLinkItem(linkItem, pageIcon);
  }
 
-const setColorToLinkItem = async (linkItem: HTMLElement, pageProps: propsObject) => {
+// `data-ref` holds the sanitized page name; titles and tab labels only have text
+const getLinkTitle = (linkItem: HTMLElement): string => {
+    return linkItem.getAttribute('data-ref')
+        || linkItem.childNodes[1]?.textContent?.trim()
+        || linkItem.textContent?.trim()
+        || '';
+}
+
+const iconMarkup = (pageIcon: iconObject): string => {
+    const isEmoji = pageIcon.type === 'emoji';
+    const color = pageIcon.color ? ` style="color:${pageIcon.color}"` : '';
+    const inner = isEmoji
+        ? `<em-emoji id="${pageIcon.id}"></em-emoji>`
+        : `<i class="ti ti-${pageIcon.id}"></i>`;
+    return `<span class="awLi-icon" data-is-emoji="${isEmoji}"${color}>${inner}</span>`;
+}
+
+const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
+    linkItem.querySelector('.awLi-icon')?.remove();
+    if (!pageIcon.id) {
+        return;
+    }
+    // Logseq already draws an icon for nodes that own one - don't duplicate it
+    if (linkItem.querySelector(globals.nativeIconSelector)) {
+        return;
+    }
+    linkItem.insertAdjacentHTML('afterbegin', iconMarkup(pageIcon));
+}
+
+const setColorToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
     linkItem.classList.remove('awLi-stroke');
-    const pageColor = pageProps['color'];
-    if (pageColor && pageColor !== 'none') {
-        const oldPageColor = getComputedStyle(linkItem).getPropertyValue('awLi-color');
-        if (!oldPageColor && oldPageColor !== pageColor) {
-            linkItem.style.setProperty('--awLi-color', pageColor);
-            linkItem.style.setProperty('--ls-tag-text-color', pageColor);
-            linkItem.classList.add('awLi-color');
-        }
+    const pageColor = pageIcon.color;
+    if (pageColor) {
+        linkItem.style.setProperty('--awLi-color', pageColor);
+        linkItem.classList.add('awLi-color');
         const bg = linkItem.classList.contains('tag') ? globals.themeColor : globals.themeBg
         if (globals.pluginConfig.fixLowContrast && isNeedLowContrastFix(pageColor, bg)) {
             linkItem.classList.add('awLi-stroke');
@@ -166,8 +167,6 @@ const setColorToLinkItem = async (linkItem: HTMLElement, pageProps: propsObject)
     } else {
         linkItem.classList.remove('awLi-color');
         linkItem.style.removeProperty('--awLi-color');
-        linkItem.style.removeProperty('--ls-tag-text-color');
-        linkItem.classList.remove('awLi-stroke');
     }
 }
 
@@ -210,17 +209,38 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
         for (let i = 0; i < linkList.length; i++) {
             const linkItem = linkList[i] as HTMLElement;
             linkItem.style.removeProperty('--awLi-color');
+            linkItem.classList.remove('awLi-color');
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
         }
     }
 }
 
+// The tabs plugin renders in its own iframe, which has neither the plugin CSS
+// nor Logseq's Tabler webfont - both get copied in from the host document.
 const setTabsCSS = () => {
     injectPluginCSS('logseq-tabs_iframe', 'awLi-tabs-styles', tabsIframeStyles);
+    injectTablerFont('logseq-tabs_iframe');
+}
 
+const injectTablerFont = (iframeId: string) => {
+    const pluginIframe = doc.getElementById(iframeId) as HTMLIFrameElement;
+    if (!pluginIframe || !pluginIframe.contentDocument) {
+        return;
+    }
+    const tablerLink = doc.querySelector('link[href*="tabler-icons"]') as HTMLLinkElement;
+    if (!tablerLink) {
+        return;
+    }
+    pluginIframe.contentDocument.getElementById('awLi-tabler-css')?.remove();
+    pluginIframe.contentDocument.head.insertAdjacentHTML(
+        'beforeend',
+        `<link rel="stylesheet" id="awLi-tabler-css" href="${tablerLink.href}">`
+    );
 }
 
 const removeTabsCSS = () => {
     ejectPluginCSS('logseq-tabs_iframe', 'awLi-tabs-styles');
+    const pluginIframe = doc.getElementById('logseq-tabs_iframe') as HTMLIFrameElement;
+    pluginIframe?.contentDocument?.getElementById('awLi-tabler-css')?.remove();
 }
