@@ -161,6 +161,9 @@ const getPagePropertyValue = async (pageTitle: string, propertyName: string): Pr
             || VALUE_REFERENCE_PROPERTY_TYPES.has(definition.type)) {
             return resolveReferenceValue(value, definition.type);
         }
+        if (definition.type === 'datetime' && typeof value === 'number') {
+            return new Date(value).toLocaleString();
+        }
         return value == null ? null : String(value);
     }));
     const presentValues = values.filter((value): value is string => value !== null);

@@ -11,6 +11,7 @@ import tabsIframeStyles from  './tabsIframe.css?inline';
 
 let tabsPluginIframe: HTMLIFrameElement;
 let graphChangeRenderTimer: ReturnType<typeof setTimeout> | undefined;
+let themeChangeRenderTimer: ReturnType<typeof setTimeout> | undefined;
 let unregisterDbChanged: (() => void) | undefined;
 let unregisterThemeChanged: (() => void) | undefined;
 let unregisterThemeModeChanged: (() => void) | undefined;
@@ -23,6 +24,15 @@ const schedulePageIconsRender = (delay: number) => {
             pageIconsRender();
         }
     }, delay);
+}
+
+const scheduleThemeRender = () => {
+    clearTimeout(themeChangeRenderTimer);
+    themeChangeRenderTimer = setTimeout(() => {
+        if (globals.pluginConfig.pageIconsEnabled) {
+            pageIconsRender();
+        }
+    }, 2000);
 }
 
 export const toggleIconsFeature = () => {
@@ -51,10 +61,10 @@ export const pageIconsLoad = async () => {
         schedulePageIconsRender(300);
     });
     unregisterThemeChanged = logseq.App.onThemeChanged(() => {
-        schedulePageIconsRender(2000);
+        scheduleThemeRender();
     });
     unregisterThemeModeChanged = logseq.App.onThemeModeChanged(() => {
-        schedulePageIconsRender(2000);
+        scheduleThemeRender();
     });
     unregisterRouteChanged = logseq.App.onRouteChanged(() => {
         if (globals.pluginConfig.pageIconsEnabled) {
@@ -72,6 +82,7 @@ const pageIconsRender = () => {
 
 export const pageIconsUnload = () => {
     clearTimeout(graphChangeRenderTimer);
+    clearTimeout(themeChangeRenderTimer);
     unregisterDbChanged?.();
     unregisterThemeChanged?.();
     unregisterThemeModeChanged?.();
@@ -168,16 +179,22 @@ const RENDERED_LABEL_ATTRIBUTE = 'data-awli-rendered-label';
 // `data-ref`, and their visible label can change after template rendering.
 const getLinkTitle = (linkItem: HTMLElement): string => {
     const dataRef = linkItem.getAttribute('data-ref');
-    const cachedTitle = linkItem.getAttribute(RESOLVED_TITLE_ATTRIBUTE);
-    if (dataRef && cachedTitle && dataRef !== cachedTitle) {
+    const resolvedTitle = linkItem.getAttribute(RESOLVED_TITLE_ATTRIBUTE);
+    const renderedLabel = linkItem.getAttribute(RENDERED_LABEL_ATTRIBUTE);
+    const canUseCachedTitle = linkItem.matches(globals.renderLinksSelector)
+        && renderedLabel
+        && linkItem.textContent?.includes(renderedLabel);
+    const cachedTitle = canUseCachedTitle ? resolvedTitle : null;
+    if (resolvedTitle && ((dataRef && dataRef !== resolvedTitle) || !canUseCachedTitle)) {
         restoreRenderedLabel(linkItem);
+        linkItem.removeAttribute(RESOLVED_TITLE_ATTRIBUTE);
     }
     const title = dataRef
         || cachedTitle
         || linkItem.childNodes[1]?.textContent?.trim()
         || linkItem.textContent?.trim()
         || '';
-    if (title) {
+    if (title && linkItem.matches(globals.renderLinksSelector)) {
         linkItem.setAttribute(RESOLVED_TITLE_ATTRIBUTE, title);
     }
     return title;
