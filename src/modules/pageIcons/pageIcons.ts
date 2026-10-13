@@ -152,9 +152,9 @@ const iconMarkup = (pageIcon: iconObject): string => {
     return `<span class="awLi-icon" data-is-emoji="${isEmoji}"${color}>${inner}</span>`;
 }
 
-const isQueryGroupHeaderLink = (linkItem: HTMLElement): boolean => {
+const isGeneratedGroupHeaderLink = (linkItem: HTMLElement): boolean => {
     return linkItem.matches('.page-ref')
-        && Boolean(linkItem.closest('.query-result .ls-foldable-header'));
+        && Boolean(linkItem.closest('.ls-foldable-header'));
 }
 
 const findLabelTextNode = (linkItem: HTMLElement, title: string): Text | null => {
@@ -162,16 +162,16 @@ const findLabelTextNode = (linkItem: HTMLElement, title: string): Text | null =>
     const showText = ownerDocument.defaultView?.NodeFilter.SHOW_TEXT || 4;
     const walker = ownerDocument.createTreeWalker(linkItem, showText);
     const normalizedTitle = title.trim().toLowerCase();
-    const queryGroupHeader = isQueryGroupHeaderLink(linkItem);
+    const generatedGroupHeader = isGeneratedGroupHeaderLink(linkItem);
     let current = walker.nextNode() as Text | null;
     while (current) {
         const parent = current.parentElement;
         const isIcon = parent?.closest('.awLi-icon, .icon-emoji-wrap, .icon-cp-container');
         const normalizedText = current.textContent?.trim().toLowerCase() || '';
         const ordinaryLabel = normalizedText === normalizedTitle;
-        const queryGroupLabel = queryGroupHeader
+        const generatedGroupLabel = generatedGroupHeader
             && normalizedText.startsWith(`${normalizedTitle} `);
-        if (!isIcon && (ordinaryLabel || queryGroupLabel)) {
+        if (!isIcon && (ordinaryLabel || generatedGroupLabel)) {
             return current;
         }
         current = walker.nextNode() as Text | null;
