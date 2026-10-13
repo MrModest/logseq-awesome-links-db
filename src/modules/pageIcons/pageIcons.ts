@@ -3,37 +3,33 @@ import fastdom from 'fastdom'
 import { body, doc, globals, iconObject, root } from '../globals';
 import { isNeedLowContrastFix, injectPluginCSS, ejectPluginCSS } from '../utils';
 import { getPropsByPageName, clearIconsCache } from './queries';
-import { clearRenderTemplateCache, getRenderedLinkLabel, renderedLinkLabel } from './renderTemplate';
+import { clearRenderedLabelsCache, clearRenderTemplateCache, getRenderedLinkLabel } from './renderTemplate';
+import { applyLinkLabel, resolveLinkTitle, restoreLinkLabel } from './renderedLabelState';
 import { resolveTablerId } from './tablerIcon';
 
 import pageIconsStyles from  './pageIcons.css?inline';
 import tabsIframeStyles from  './tabsIframe.css?inline';
 
 let tabsPluginIframe: HTMLIFrameElement;
-let graphChangeRenderTimer: ReturnType<typeof setTimeout> | undefined;
-let themeChangeRenderTimer: ReturnType<typeof setTimeout> | undefined;
-let unregisterDbChanged: (() => void) | undefined;
-let unregisterThemeChanged: (() => void) | undefined;
-let unregisterThemeModeChanged: (() => void) | undefined;
-let unregisterRouteChanged: (() => void) | undefined;
+const offHooks: (() => void)[] = [];
 
-const schedulePageIconsRender = (delay: number) => {
-    clearTimeout(graphChangeRenderTimer);
-    graphChangeRenderTimer = setTimeout(() => {
-        if (globals.pluginConfig.pageIconsEnabled) {
-            pageIconsRender();
-        }
-    }, delay);
+const createRenderScheduler = (delay: number) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    return {
+        run: () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                if (globals.pluginConfig.pageIconsEnabled) {
+                    pageIconsRender();
+                }
+            }, delay);
+        },
+        cancel: () => clearTimeout(timer),
+    };
 }
 
-const scheduleThemeRender = () => {
-    clearTimeout(themeChangeRenderTimer);
-    themeChangeRenderTimer = setTimeout(() => {
-        if (globals.pluginConfig.pageIconsEnabled) {
-            pageIconsRender();
-        }
-    }, 2000);
-}
+const graphChangeRender = createRenderScheduler(300);
+const themeChangeRender = createRenderScheduler(2000);
 
 export const toggleIconsFeature = () => {
     pageIconsUnload();
@@ -55,22 +51,22 @@ export const pageIconsLoad = async () => {
     pageIconsRender();
 
     // Icons live in the graph, so a graph edit can invalidate any cached lookup
-    unregisterDbChanged = logseq.DB.onChanged(() => {
+    offHooks.push(logseq.DB.onChanged(() => {
         clearIconsCache();
-        clearRenderTemplateCache();
-        schedulePageIconsRender(300);
-    });
-    unregisterThemeChanged = logseq.App.onThemeChanged(() => {
-        scheduleThemeRender();
-    });
-    unregisterThemeModeChanged = logseq.App.onThemeModeChanged(() => {
-        scheduleThemeRender();
-    });
-    unregisterRouteChanged = logseq.App.onRouteChanged(() => {
+        clearRenderedLabelsCache();
+        graphChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onThemeChanged(() => {
+        themeChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onThemeModeChanged(() => {
+        themeChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onRouteChanged(() => {
         if (globals.pluginConfig.pageIconsEnabled) {
             setActiveTabIcon();
         }
-    });
+    }));
 }
 
 const pageIconsRender = () => {
@@ -81,16 +77,9 @@ const pageIconsRender = () => {
  }
 
 export const pageIconsUnload = () => {
-    clearTimeout(graphChangeRenderTimer);
-    clearTimeout(themeChangeRenderTimer);
-    unregisterDbChanged?.();
-    unregisterThemeChanged?.();
-    unregisterThemeModeChanged?.();
-    unregisterRouteChanged?.();
-    unregisterDbChanged = undefined;
-    unregisterThemeChanged = undefined;
-    unregisterThemeModeChanged = undefined;
-    unregisterRouteChanged = undefined;
+    graphChangeRender.cancel();
+    themeChangeRender.cancel();
+    offHooks.splice(0).forEach((off) => off());
     body.classList.remove('awLi-icons');
     doc.head.querySelector(`style[data-injected-style="awLi-icon-css-${globals.pluginID}"]`)?.remove();
     removePageIcons();
@@ -151,10 +140,10 @@ export const setStyleToLinkList = (linkList: HTMLElement[]) => {
 
 export const processLinkItem = async (linkItem: HTMLElement) => {
     const linkText = linkItem.textContent;
-    if (!linkText || linkText.startsWith(' ')) {
+    if (linkText?.startsWith(' ')) {
         return;
     }
-    const pageTitle = getLinkTitle(linkItem);
+    const pageTitle = resolveLinkTitle(linkItem);
     if (!pageTitle) {
         return;
     }
@@ -164,41 +153,11 @@ export const processLinkItem = async (linkItem: HTMLElement) => {
         renderLabel ? getRenderedLinkLabel(pageTitle) : Promise.resolve(null),
     ]);
     if (renderLabel) {
-        setRenderedLabel(linkItem, renderedLabel);
+        applyLinkLabel(linkItem, renderedLabel);
     }
     setIconToLinkItem(linkItem, pageIcon);
     setColorToLinkItem(linkItem, pageIcon);
  }
-
-const RESOLVED_TITLE_ATTRIBUTE = 'data-awli-title';
-const ORIGINAL_LABEL_ATTRIBUTE = 'data-awli-original-label';
-const RENDERED_LABEL_ATTRIBUTE = 'data-awli-rendered-label';
-
-// `data-ref` holds the sanitized page name; titles and tab labels only have text.
-// Cache the first resolved title because some legacy reference links have no
-// `data-ref`, and their visible label can change after template rendering.
-const getLinkTitle = (linkItem: HTMLElement): string => {
-    const dataRef = linkItem.getAttribute('data-ref');
-    const resolvedTitle = linkItem.getAttribute(RESOLVED_TITLE_ATTRIBUTE);
-    const renderedLabel = linkItem.getAttribute(RENDERED_LABEL_ATTRIBUTE);
-    const canUseCachedTitle = linkItem.matches(globals.renderLinksSelector)
-        && renderedLabel
-        && linkItem.textContent?.includes(renderedLabel);
-    const cachedTitle = canUseCachedTitle ? resolvedTitle : null;
-    if (resolvedTitle && ((dataRef && dataRef !== resolvedTitle) || !canUseCachedTitle)) {
-        restoreRenderedLabel(linkItem);
-        linkItem.removeAttribute(RESOLVED_TITLE_ATTRIBUTE);
-    }
-    const title = dataRef
-        || cachedTitle
-        || linkItem.childNodes[1]?.textContent?.trim()
-        || linkItem.textContent?.trim()
-        || '';
-    if (title && linkItem.matches(globals.renderLinksSelector)) {
-        linkItem.setAttribute(RESOLVED_TITLE_ATTRIBUTE, title);
-    }
-    return title;
-}
 
 const iconMarkup = (pageIcon: iconObject): string => {
     const isEmoji = pageIcon.type === 'emoji';
@@ -207,76 +166,6 @@ const iconMarkup = (pageIcon: iconObject): string => {
         ? `<em-emoji id="${pageIcon.id}"></em-emoji>`
         : `<i class="ti ti-${resolveTablerId(pageIcon.id || '')}"></i>`;
     return `<span class="awLi-icon" data-is-emoji="${isEmoji}"${color}>${inner}</span>`;
-}
-
-const isGeneratedGroupHeaderLink = (linkItem: HTMLElement): boolean => {
-    return linkItem.matches('.page-ref')
-        && Boolean(linkItem.closest('.ls-foldable-header'));
-}
-
-const findLabelTextNode = (linkItem: HTMLElement, title: string): Text | null => {
-    const ownerDocument = linkItem.ownerDocument;
-    const showText = ownerDocument.defaultView?.NodeFilter.SHOW_TEXT || 4;
-    const walker = ownerDocument.createTreeWalker(linkItem, showText);
-    const normalizedTitle = title.trim().toLowerCase();
-    const previousRenderedLabel = (linkItem.getAttribute(RENDERED_LABEL_ATTRIBUTE) || '').toLowerCase();
-    const generatedGroupHeader = isGeneratedGroupHeaderLink(linkItem);
-    let current = walker.nextNode() as Text | null;
-    while (current) {
-        const parent = current.parentElement;
-        const isIcon = parent?.closest('.awLi-icon, .icon-emoji-wrap, .icon-cp-container');
-        const normalizedText = current.textContent?.trim().toLowerCase() || '';
-        const ordinaryLabel = normalizedText === normalizedTitle;
-        const generatedGroupLabel = generatedGroupHeader
-            && normalizedText.startsWith(`${normalizedTitle} `);
-        const existingRenderedLabel = previousRenderedLabel
-            && normalizedText === previousRenderedLabel;
-        if (!isIcon && (ordinaryLabel || generatedGroupLabel || existingRenderedLabel)) {
-            return current;
-        }
-        current = walker.nextNode() as Text | null;
-    }
-    return null;
-}
-
-const restoreRenderedLabel = (linkItem: Element) => {
-    const originalText = linkItem.getAttribute(ORIGINAL_LABEL_ATTRIBUTE);
-    const renderedText = linkItem.getAttribute(RENDERED_LABEL_ATTRIBUTE);
-    if (originalText === null || renderedText === null) {
-        return;
-    }
-    const ownerDocument = linkItem.ownerDocument;
-    const showText = ownerDocument.defaultView?.NodeFilter.SHOW_TEXT || 4;
-    const walker = ownerDocument.createTreeWalker(linkItem, showText);
-    let current = walker.nextNode() as Text | null;
-    while (current) {
-        if (current.textContent?.trim() === renderedText.trim()) {
-            current.textContent = originalText;
-            break;
-        }
-        current = walker.nextNode() as Text | null;
-    }
-    linkItem.removeAttribute(ORIGINAL_LABEL_ATTRIBUTE);
-    linkItem.removeAttribute(RENDERED_LABEL_ATTRIBUTE);
-}
-
-const setRenderedLabel = (linkItem: HTMLElement, rendered: renderedLinkLabel | null) => {
-    if (!rendered) {
-        restoreRenderedLabel(linkItem);
-        return;
-    }
-    // Only replace Logseq's ordinary page label. An explicit link alias has
-    // different text and remains exactly as the author wrote it.
-    const labelNode = findLabelTextNode(linkItem, rendered.title);
-    if (!labelNode) {
-        return;
-    }
-    const originalText = labelNode.textContent || '';
-    if (!linkItem.hasAttribute(ORIGINAL_LABEL_ATTRIBUTE)) {
-        linkItem.setAttribute(ORIGINAL_LABEL_ATTRIBUTE, originalText);
-    }
-    labelNode.textContent = rendered.label;
-    linkItem.setAttribute(RENDERED_LABEL_ATTRIBUTE, rendered.label);
 }
 
 const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
@@ -376,8 +265,7 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
             linkItem.classList.remove('awLi-hasIcon');
-            restoreRenderedLabel(linkItem);
-            linkItem.removeAttribute(RESOLVED_TITLE_ATTRIBUTE);
+            restoreLinkLabel(linkItem);
             showNativeIcon(findNativeIcon(linkItem));
         }
     }

@@ -1,6 +1,7 @@
 import '@logseq/libs';
 
 import { escapeForEdn } from './queries';
+import { renderTemplateLabel, templateFields } from './renderTemplateCore';
 
 type propertyDefinition = {
     ident: string;
@@ -13,24 +14,19 @@ export type renderedLinkLabel = {
 };
 
 const RENDER_TEMPLATE_PROPERTY = 'renderTemplate';
-const TITLE_REFERENCE_PROPERTY_TYPES = new Set([
-    'asset',
-    'date',
-    'entity',
-    'node',
-    'page',
-]);
-const VALUE_REFERENCE_PROPERTY_TYPES = new Set([
-    'default',
-    'number',
-    'url',
-]);
-
-const propertyDefinitions = new Map<string, Promise<propertyDefinition | null>>();
+const PROPERTY_DEFINITION_TTL_MS = 60_000;
+const propertyDefinitions = new Map<string, {
+    expiresAt: number;
+    value: Promise<propertyDefinition | null>;
+}>();
 const renderedLabels = new Map<string, Promise<renderedLinkLabel | null>>();
 
 export const clearRenderTemplateCache = () => {
     propertyDefinitions.clear();
+    clearRenderedLabelsCache();
+}
+
+export const clearRenderedLabelsCache = () => {
     renderedLabels.clear();
 }
 
@@ -74,12 +70,16 @@ const findPropertyDefinition = async (propertyName: string): Promise<propertyDef
 
 const getPropertyDefinition = (propertyName: string): Promise<propertyDefinition | null> => {
     const key = propertyName.toLowerCase();
-    let definition = propertyDefinitions.get(key);
-    if (!definition) {
-        definition = findPropertyDefinition(propertyName);
-        propertyDefinitions.set(key, definition);
+    const cached = propertyDefinitions.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.value;
     }
-    return definition;
+    const value = findPropertyDefinition(propertyName);
+    propertyDefinitions.set(key, {
+        expiresAt: Date.now() + PROPERTY_DEFINITION_TTL_MS,
+        value,
+    });
+    return value;
 }
 
 const pageLookupClause = (pageTitle: string): string => {
@@ -117,20 +117,39 @@ const findTemplate = async (pageTitle: string): Promise<{ title: string; templat
     };
 }
 
-const resolveReferenceValue = async (value: unknown, propertyType: string): Promise<string | null> => {
-    if (typeof value !== 'number') {
-        return value == null ? null : String(value);
+const resolvePropertyValue = async (value: unknown, propertyType: string): Promise<string | null> => {
+    if (value == null) {
+        return null;
     }
-    if (VALUE_REFERENCE_PROPERTY_TYPES.has(propertyType)) {
+    if (typeof value !== 'number') {
+        return String(value);
+    }
+    switch (propertyType) {
+    case 'default':
+    case 'number':
+    case 'url': {
         const valueRows = await queryRows(
             `[:find ?resolved :where [${value} :logseq.property/value ?resolved]]`
         );
         if (valueRows.length) {
             return String(valueRows[0][0]);
         }
+        const titleRows = await queryRows(`[:find ?resolved :where [${value} :block/title ?resolved]]`);
+        return titleRows.length ? String(titleRows[0][0]) : null;
     }
-    const titleRows = await queryRows(`[:find ?resolved :where [${value} :block/title ?resolved]]`);
-    return titleRows.length ? String(titleRows[0][0]) : null;
+    case 'asset':
+    case 'date':
+    case 'entity':
+    case 'node':
+    case 'page': {
+        const titleRows = await queryRows(`[:find ?resolved :where [${value} :block/title ?resolved]]`);
+        return titleRows.length ? String(titleRows[0][0]) : null;
+    }
+    case 'datetime':
+        return new Date(value).toLocaleString();
+    default:
+        return String(value);
+    }
 }
 
 type pagePropertyValue = {
@@ -156,39 +175,13 @@ const getPagePropertyValue = async (pageTitle: string, propertyName: string): Pr
         return { known: true, value: null };
     }
     const values = await Promise.all(rows.map(async (row) => {
-        const value = row[0];
-        if (TITLE_REFERENCE_PROPERTY_TYPES.has(definition.type)
-            || VALUE_REFERENCE_PROPERTY_TYPES.has(definition.type)) {
-            return resolveReferenceValue(value, definition.type);
-        }
-        if (definition.type === 'datetime' && typeof value === 'number') {
-            return new Date(value).toLocaleString();
-        }
-        return value == null ? null : String(value);
+        return resolvePropertyValue(row[0], definition.type);
     }));
     const presentValues = values.filter((value): value is string => value !== null);
     return {
         known: true,
         value: presentValues.length ? presentValues.join(', ') : null,
     };
-}
-
-const templateFields = (template: string): string[] => {
-    const fields = new Set<string>();
-    for (const match of template.matchAll(/\{([^{}]+)\}/g)) {
-        const field = match[1].trim();
-        if (field) {
-            fields.add(field);
-        }
-    }
-    return [...fields];
-}
-
-export const applyRenderTemplate = (template: string, values: Map<string, string>): string => {
-    return template.replace(/\{([^{}]+)\}/g, (placeholder, rawField: string) => {
-        const value = values.get(rawField.trim().toLowerCase());
-        return value === undefined ? placeholder : value;
-    });
 }
 
 const buildRenderedLinkLabel = async (pageTitle: string): Promise<renderedLinkLabel | null> => {
@@ -207,7 +200,7 @@ const buildRenderedLinkLabel = async (pageTitle: string): Promise<renderedLinkLa
     }));
     return {
         title: found.title,
-        label: applyRenderTemplate(found.template, values),
+        label: renderTemplateLabel(found.template, values, found.title),
     };
 }
 
