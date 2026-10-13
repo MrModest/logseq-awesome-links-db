@@ -1,0 +1,28 @@
+src/modules/pageIcons/queries.ts
+  s_c75df3503dad2b::t_856783b93e70d6 37
+README.md
+  s_c75df3503dad2b::t_1def2643058795 35-36,47-48
+src/modules/pageIcons/renderTemplate.ts
+  s_c75df3503dad2b::t_c57ec4526aabed 3
+  s_c75df3503dad2b::t_b75220febffa95 124-133
+  s_c75df3503dad2b::t_d6b6c9e2f4a066 4,16,22-25,88-89,120,136-141,144,156,160-162,167-170,200-202
+src/modules/pageIcons/pageIcons.ts
+  s_c75df3503dad2b::t_c3c72c224eadcb 14-26,43-44,48,51,53-54,56-57,59-62,74-82,150-155,162-168,180-183,205,215-217,226-228,231-243,258-262,363
+  s_c75df3503dad2b::t_eb27558456538d 170-176
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "f23b52512f384ee296358ece10acb4a12f07768a",
+  "prompts": {},
+  "sessions": {
+    "s_c75df3503dad2b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a135c2-4706-7dc3-94c8-514f342a9cee",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
