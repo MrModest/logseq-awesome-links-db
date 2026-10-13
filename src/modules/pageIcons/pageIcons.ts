@@ -3,12 +3,33 @@ import fastdom from 'fastdom'
 import { body, doc, globals, iconObject, root } from '../globals';
 import { isNeedLowContrastFix, injectPluginCSS, ejectPluginCSS } from '../utils';
 import { getPropsByPageName, clearIconsCache } from './queries';
+import { clearRenderedLabelsCache, clearRenderTemplateCache, getRenderedLinkLabel } from './renderTemplate';
+import { applyLinkLabel, resolveLinkTitle, restoreLinkLabel } from './renderedLabelState';
 import { resolveTablerId } from './tablerIcon';
 
 import pageIconsStyles from  './pageIcons.css?inline';
 import tabsIframeStyles from  './tabsIframe.css?inline';
 
 let tabsPluginIframe: HTMLIFrameElement;
+const offHooks: (() => void)[] = [];
+
+const createRenderScheduler = (delay: number) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    return {
+        run: () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                if (globals.pluginConfig.pageIconsEnabled) {
+                    pageIconsRender();
+                }
+            }, delay);
+        },
+        cancel: () => clearTimeout(timer),
+    };
+}
+
+const graphChangeRender = createRenderScheduler(300);
+const themeChangeRender = createRenderScheduler(2000);
 
 export const toggleIconsFeature = () => {
     pageIconsUnload();
@@ -25,25 +46,27 @@ export const pageIconsLoad = async () => {
     body.classList.add('awLi-icons')
     logseq.provideStyle({ key: 'awLi-icon-css', style: pageIconsStyles });
     setTabsCSS();
+    clearIconsCache();
+    clearRenderTemplateCache();
     pageIconsRender();
 
     // Icons live in the graph, so a graph edit can invalidate any cached lookup
-    logseq.DB.onChanged(() => {
+    offHooks.push(logseq.DB.onChanged(() => {
         clearIconsCache();
-    });
-    logseq.App.onThemeChanged(() => {
-        setTimeout(() => {
-            pageIconsRender();
-        }, 2000);
-    });
-    logseq.App.onThemeModeChanged(() => {
-        setTimeout(() => {
-            pageIconsRender();
-        }, 2000);
-    });
-    logseq.App.onRouteChanged(() => {
-        setActiveTabIcon();
-    });
+        clearRenderedLabelsCache();
+        graphChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onThemeChanged(() => {
+        themeChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onThemeModeChanged(() => {
+        themeChangeRender.run();
+    }));
+    offHooks.push(logseq.App.onRouteChanged(() => {
+        if (globals.pluginConfig.pageIconsEnabled) {
+            setActiveTabIcon();
+        }
+    }));
 }
 
 const pageIconsRender = () => {
@@ -54,6 +77,9 @@ const pageIconsRender = () => {
  }
 
 export const pageIconsUnload = () => {
+    graphChangeRender.cancel();
+    themeChangeRender.cancel();
+    offHooks.splice(0).forEach((off) => off());
     body.classList.remove('awLi-icons');
     doc.head.querySelector(`style[data-injected-style="awLi-icon-css-${globals.pluginID}"]`)?.remove();
     removePageIcons();
@@ -114,25 +140,24 @@ export const setStyleToLinkList = (linkList: HTMLElement[]) => {
 
 export const processLinkItem = async (linkItem: HTMLElement) => {
     const linkText = linkItem.textContent;
-    if (!linkText || linkText.startsWith(' ')) {
+    if (linkText?.startsWith(' ')) {
         return;
     }
-    const pageTitle = getLinkTitle(linkItem);
+    const pageTitle = resolveLinkTitle(linkItem);
     if (!pageTitle) {
         return;
     }
-    const pageIcon = await getPropsByPageName(pageTitle);
+    const renderLabel = linkItem.matches(globals.renderLinksSelector);
+    const [pageIcon, renderedLabel] = await Promise.all([
+        getPropsByPageName(pageTitle),
+        renderLabel ? getRenderedLinkLabel(pageTitle) : Promise.resolve(null),
+    ]);
+    if (renderLabel) {
+        applyLinkLabel(linkItem, renderedLabel);
+    }
     setIconToLinkItem(linkItem, pageIcon);
     setColorToLinkItem(linkItem, pageIcon);
  }
-
-// `data-ref` holds the sanitized page name; titles and tab labels only have text
-const getLinkTitle = (linkItem: HTMLElement): string => {
-    return linkItem.getAttribute('data-ref')
-        || linkItem.childNodes[1]?.textContent?.trim()
-        || linkItem.textContent?.trim()
-        || '';
-}
 
 const iconMarkup = (pageIcon: iconObject): string => {
     const isEmoji = pageIcon.type === 'emoji';
@@ -240,6 +265,7 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
             linkItem.classList.remove('awLi-hasIcon');
+            restoreLinkLabel(linkItem);
             showNativeIcon(findNativeIcon(linkItem));
         }
     }

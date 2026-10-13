@@ -34,7 +34,7 @@ export const clearIconsCache = () => {
     iconsCache.clear();
 }
 
-const escapeForEdn = (title: string): string => {
+export const escapeForEdn = (title: string): string => {
     return title.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
