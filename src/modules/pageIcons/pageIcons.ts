@@ -3,12 +3,14 @@ import fastdom from 'fastdom'
 import { body, doc, globals, iconObject, root } from '../globals';
 import { isNeedLowContrastFix, injectPluginCSS, ejectPluginCSS } from '../utils';
 import { getPropsByPageName, clearIconsCache } from './queries';
+import { clearRenderTemplateCache, getRenderedLinkLabel, renderedLinkLabel } from './renderTemplate';
 import { resolveTablerId } from './tablerIcon';
 
 import pageIconsStyles from  './pageIcons.css?inline';
 import tabsIframeStyles from  './tabsIframe.css?inline';
 
 let tabsPluginIframe: HTMLIFrameElement;
+let graphChangeRenderTimer: ReturnType<typeof setTimeout> | undefined;
 
 export const toggleIconsFeature = () => {
     pageIconsUnload();
@@ -30,6 +32,9 @@ export const pageIconsLoad = async () => {
     // Icons live in the graph, so a graph edit can invalidate any cached lookup
     logseq.DB.onChanged(() => {
         clearIconsCache();
+        clearRenderTemplateCache();
+        clearTimeout(graphChangeRenderTimer);
+        graphChangeRenderTimer = setTimeout(pageIconsRender, 100);
     });
     logseq.App.onThemeChanged(() => {
         setTimeout(() => {
@@ -122,6 +127,10 @@ export const processLinkItem = async (linkItem: HTMLElement) => {
         return;
     }
     const pageIcon = await getPropsByPageName(pageTitle);
+    if (linkItem.matches(globals.renderLinksSelector)) {
+        const renderedLabel = await getRenderedLinkLabel(pageTitle);
+        setRenderedLabel(linkItem, renderedLabel);
+    }
     setIconToLinkItem(linkItem, pageIcon);
     setColorToLinkItem(linkItem, pageIcon);
  }
@@ -141,6 +150,55 @@ const iconMarkup = (pageIcon: iconObject): string => {
         ? `<em-emoji id="${pageIcon.id}"></em-emoji>`
         : `<i class="ti ti-${resolveTablerId(pageIcon.id || '')}"></i>`;
     return `<span class="awLi-icon" data-is-emoji="${isEmoji}"${color}>${inner}</span>`;
+}
+
+const findLabelTextNode = (linkItem: HTMLElement, title: string): Text | null => {
+    const ownerDocument = linkItem.ownerDocument;
+    const showText = ownerDocument.defaultView?.NodeFilter.SHOW_TEXT || 4;
+    const walker = ownerDocument.createTreeWalker(linkItem, showText);
+    let current = walker.nextNode() as Text | null;
+    while (current) {
+        const parent = current.parentElement;
+        const isIcon = parent?.closest('.awLi-icon, .icon-emoji-wrap, .icon-cp-container');
+        if (!isIcon && current.textContent?.trim().toLowerCase() === title.toLowerCase()) {
+            return current;
+        }
+        current = walker.nextNode() as Text | null;
+    }
+    return null;
+}
+
+const restoreRenderedLabel = (linkItem: Element) => {
+    const renderedLabel = linkItem.querySelector('.awLi-renderedLabel');
+    if (!renderedLabel) {
+        return;
+    }
+    const originalText = renderedLabel.getAttribute('data-original-text') || '';
+    renderedLabel.replaceWith(renderedLabel.ownerDocument.createTextNode(originalText));
+}
+
+const setRenderedLabel = (linkItem: HTMLElement, rendered: renderedLinkLabel | null) => {
+    const existing = linkItem.querySelector('.awLi-renderedLabel');
+    if (!rendered) {
+        restoreRenderedLabel(linkItem);
+        return;
+    }
+    if (existing) {
+        existing.textContent = rendered.label;
+        return;
+    }
+    // Only replace Logseq's ordinary page label. An explicit link alias has
+    // different text and remains exactly as the author wrote it.
+    const labelNode = findLabelTextNode(linkItem, rendered.title);
+    if (!labelNode) {
+        return;
+    }
+    const originalText = labelNode.textContent || '';
+    const renderedSpan = labelNode.ownerDocument.createElement('span');
+    renderedSpan.classList.add('awLi-renderedLabel');
+    renderedSpan.setAttribute('data-original-text', originalText);
+    renderedSpan.textContent = originalText.replace(originalText.trim(), rendered.label);
+    labelNode.replaceWith(renderedSpan);
 }
 
 const setIconToLinkItem = async (linkItem: HTMLElement, pageIcon: iconObject) => {
@@ -240,6 +298,7 @@ const removeStyleFromLinkList = (linkList: Element[]) => {
             linkItem.classList.remove('awLi-stroke');
             linkItem.querySelector('.awLi-icon')?.remove();
             linkItem.classList.remove('awLi-hasIcon');
+            restoreRenderedLabel(linkItem);
             showNativeIcon(findNativeIcon(linkItem));
         }
     }

@@ -30,6 +30,26 @@ Icons render with Logseq's bundled Tabler webfont (`<i class="ti ti-...">`); emo
 
 Every external link gets the favicon of its host, cached per hostname. Optionally the link takes the color of the first tag or page ref inline with it.
 
+### Internal-link display templates
+
+A tag can carry a local `renderTemplate` text property to control how ordinary
+links to nodes using that tag are displayed. The property belongs to the tag
+node itself; it is not a Tag Property and is not exposed on tagged nodes.
+
+For example, a `#Jira` tag with this value:
+
+```
+{title} — {summary}
+```
+
+renders an ordinary link to a tagged ticket as `FIT-282 — Update …`. `{title}`
+is the target node title; any other placeholder resolves a property of the
+target node by name. Unknown placeholders remain visible in the output. If
+multiple tags define a template, the first tag by database id wins.
+
+Templates affect only the rendered DOM. They do not rename nodes or rewrite
+stored links, and explicit aliases keep their authored label.
+
 ## Settings
 
 | Setting | Default | Effect |
