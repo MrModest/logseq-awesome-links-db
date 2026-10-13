@@ -93,7 +93,9 @@ printf '%s\n' "$(base64 -i favicon.ico | tr -d '\n')"
 
 ## Install
 
-Not on the marketplace. Build it and load the folder:
+Install **Awesome Links DB** from Logseq's Marketplace.
+
+To load the current source locally instead, build it first:
 
 ```bash
 pnpm install
