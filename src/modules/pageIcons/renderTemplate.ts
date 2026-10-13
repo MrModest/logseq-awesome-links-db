@@ -1,5 +1,7 @@
 import '@logseq/libs';
 
+import { escapeForEdn } from './queries';
+
 type propertyDefinition = {
     ident: string;
     type: string;
@@ -11,14 +13,16 @@ export type renderedLinkLabel = {
 };
 
 const RENDER_TEMPLATE_PROPERTY = 'renderTemplate';
-const REFERENCE_PROPERTY_TYPES = new Set([
+const TITLE_REFERENCE_PROPERTY_TYPES = new Set([
     'asset',
     'date',
-    'datetime',
-    'default',
     'entity',
     'node',
     'page',
+]);
+const VALUE_REFERENCE_PROPERTY_TYPES = new Set([
+    'default',
+    'number',
     'url',
 ]);
 
@@ -28,10 +32,6 @@ const renderedLabels = new Map<string, Promise<renderedLinkLabel | null>>();
 export const clearRenderTemplateCache = () => {
     propertyDefinitions.clear();
     renderedLabels.clear();
-}
-
-const escapeForEdn = (value: string): string => {
-    return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 const normalizeKeyword = (value: unknown): string => {
@@ -85,7 +85,8 @@ const getPropertyDefinition = (propertyName: string): Promise<propertyDefinition
 const pageLookupClause = (pageTitle: string): string => {
     const title = escapeForEdn(pageTitle.trim());
     const name = escapeForEdn(pageTitle.trim().toLowerCase());
-    return `(or [?page :block/name "${name}"]
+    return `[?page :block/name _]
+            (or [?page :block/name "${name}"]
                 [?page :block/title "${title}"])`;
 }
 
@@ -116,18 +117,31 @@ const findTemplate = async (pageTitle: string): Promise<{ title: string; templat
     };
 }
 
-const resolveReferenceTitle = async (value: unknown): Promise<string | null> => {
+const resolveReferenceValue = async (value: unknown, propertyType: string): Promise<string | null> => {
     if (typeof value !== 'number') {
         return value == null ? null : String(value);
     }
-    const rows = await queryRows(`[:find ?title :where [${value} :block/title ?title]]`);
-    return rows.length ? String(rows[0][0]) : null;
+    if (VALUE_REFERENCE_PROPERTY_TYPES.has(propertyType)) {
+        const valueRows = await queryRows(
+            `[:find ?resolved :where [${value} :logseq.property/value ?resolved]]`
+        );
+        if (valueRows.length) {
+            return String(valueRows[0][0]);
+        }
+    }
+    const titleRows = await queryRows(`[:find ?resolved :where [${value} :block/title ?resolved]]`);
+    return titleRows.length ? String(titleRows[0][0]) : null;
 }
 
-const getPagePropertyValue = async (pageTitle: string, propertyName: string): Promise<string | null> => {
+type pagePropertyValue = {
+    known: boolean;
+    value: string | null;
+};
+
+const getPagePropertyValue = async (pageTitle: string, propertyName: string): Promise<pagePropertyValue> => {
     const definition = await getPropertyDefinition(propertyName);
     if (!definition?.ident) {
-        return null;
+        return { known: false, value: null };
     }
     const query = `
     [
@@ -139,17 +153,21 @@ const getPagePropertyValue = async (pageTitle: string, propertyName: string): Pr
     `;
     const rows = await queryRows(query);
     if (!rows.length) {
-        return null;
+        return { known: true, value: null };
     }
     const values = await Promise.all(rows.map(async (row) => {
         const value = row[0];
-        if (REFERENCE_PROPERTY_TYPES.has(definition.type)) {
-            return resolveReferenceTitle(value);
+        if (TITLE_REFERENCE_PROPERTY_TYPES.has(definition.type)
+            || VALUE_REFERENCE_PROPERTY_TYPES.has(definition.type)) {
+            return resolveReferenceValue(value, definition.type);
         }
         return value == null ? null : String(value);
     }));
     const presentValues = values.filter((value): value is string => value !== null);
-    return presentValues.length ? presentValues.join(', ') : null;
+    return {
+        known: true,
+        value: presentValues.length ? presentValues.join(', ') : null,
+    };
 }
 
 const templateFields = (template: string): string[] => {
@@ -179,9 +197,9 @@ const buildRenderedLinkLabel = async (pageTitle: string): Promise<renderedLinkLa
     const fields = templateFields(found.template)
         .filter((field) => field.toLowerCase() !== 'title');
     await Promise.all(fields.map(async (field) => {
-        const value = await getPagePropertyValue(found.title, field);
-        if (value !== null) {
-            values.set(field.toLowerCase(), value);
+        const property = await getPagePropertyValue(found.title, field);
+        if (property.known) {
+            values.set(field.toLowerCase(), property.value || '');
         }
     }));
     return {
