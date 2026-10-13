@@ -1,0 +1,19 @@
+src/modules/pageIcons/pageIcons.ts
+  s_c75df3503dad2b::t_bd1116a2f5f5b3 155-159,164-165,170-174
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "b4c7af6f585d9137b34975666247e64c2efd57da",
+  "prompts": {},
+  "sessions": {
+    "s_c75df3503dad2b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a135c2-4706-7dc3-94c8-514f342a9cee",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
