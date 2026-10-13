@@ -1,0 +1,33 @@
+src/modules/pageIcons/renderTemplate.ts
+  s_c75df3503dad2b::t_96ace9597bde68 4
+  s_c75df3503dad2b::t_21cabb0d81a159 17-21,26-29,73-75,77-82,120-123,125,127-130,137-151,178,203
+src/modules/pageIcons/pageIcons.ts
+  s_c75df3503dad2b::t_21cabb0d81a159 6-7,14-28,31-32,54,56-65,69,80-82,143,146,156,268
+src/modules/pageIcons/renderTemplate.test.ts
+  s_c75df3503dad2b::t_21cabb0d81a159 1-2,4-28
+  s_c75df3503dad2b::t_96ace9597bde68 3
+package.json
+  s_c75df3503dad2b::t_7097bd15286f23 10,23-24
+src/modules/pageIcons/renderedLabelState.ts
+  s_c75df3503dad2b::t_21cabb0d81a159 1-98
+src/modules/pageIcons/renderTemplateCore.ts
+  s_c75df3503dad2b::t_96ace9597bde68 1-26
+pnpm-lock.yaml
+  s_c75df3503dad2b::t_c4622b43b6fc4a 36-38,229-231,392-397,468-496,525-528,539-542,547-550,555-558,597-600,618-620,668-670,678-681,805-807,838-840,844-846,916-922,987-989,1001-1006,1018-1020,1028-1033,1038-1049,1085-1089,1130-1157,1163-1167,1294-1295,1399-1405,1498-1539,1563-1564,1576-1577,1580-1587,1593-1594,1621-1622,1640-1641,1746-1749,1754-1755,1872-1873,1901-1902,1907-1910,1975-1978,2051-2052,2062-2065,2074-2077,2084-2087,2093-2098,2128-2148,2160-2198,2203-2207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "af4aab945965d69c7419a980630994971e15308c",
+  "prompts": {},
+  "sessions": {
+    "s_c75df3503dad2b": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a135c2-4706-7dc3-94c8-514f342a9cee",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Kamil Babaev <kamil.babaev@deliveryhero.com>"
+    }
+  }
+}
